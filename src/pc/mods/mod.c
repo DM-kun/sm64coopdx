@@ -217,6 +217,16 @@ void mod_clear(struct Mod* mod) {
         mod->description = NULL;
     }
 
+    if (mod->version != NULL) {
+        free(mod->version);
+        mod->version = NULL;
+    }
+
+    if (mod->link != NULL) {
+        free(mod->link);
+        mod->link = NULL;
+    }
+
     if (mod->files != NULL) {
         free(mod->files);
         mod->files = NULL;
@@ -387,7 +397,7 @@ static bool mod_load_files(struct Mod* mod, char* modName, char* fullPath) {
     // deal with sound directory
     {
         const char* fileTypes[] = { ".m64", ".mp3", ".aiff", ".ogg", NULL };
-        if (!mod_load_files_dir(mod, fullPath, "sound", fileTypes, false)) { return false; }
+        if (!mod_load_files_dir(mod, fullPath, "sound", fileTypes, true)) { return false; }
     }
 
     return true;
@@ -446,6 +456,8 @@ static void mod_extract_fields(struct Mod* mod) {
     mod->incompatible = NULL;
     mod->category = NULL;
     mod->description = NULL;
+    mod->version = NULL;
+    mod->link = NULL;
     mod->pausable = true;
     mod->ignoreScriptWarnings = false;
 
@@ -482,6 +494,16 @@ static void mod_extract_fields(struct Mod* mod) {
             mod->description = calloc(MOD_DESCRIPTION_MAX_LENGTH + 1, sizeof(char));
             if (snprintf(mod->description, MOD_DESCRIPTION_MAX_LENGTH, "%s", extracted) < 0) {
                 LOG_INFO("Truncated mod description field '%s'", mod->description);
+            }
+        } else if (mod->version == NULL && (extracted = extract_lua_field("-- version:", buffer))) {
+            mod->version = calloc(MOD_VERSION_MAX_LENGTH + 1, sizeof(char));
+            if (snprintf(mod->version, MOD_VERSION_MAX_LENGTH, "%s", extracted) < 0) {
+                LOG_INFO("Truncated mod version field '%s'", mod->version);
+            }
+        } else if (mod->link == NULL && (extracted = extract_lua_field("-- link:", buffer))) {
+            mod->link = calloc(MOD_LINK_MAX_LENGTH + 1, sizeof(char));
+            if (snprintf(mod->link, MOD_LINK_MAX_LENGTH, "%s", extracted) < 0) {
+                LOG_INFO("Truncated mod link field '%s'", mod->link);
             }
         } else if ((extracted = extract_lua_field("-- pausable:", buffer))) {
             mod->pausable = !strcmp(extracted, "true");
@@ -634,6 +656,8 @@ bool mod_load(struct Mods* mods, char* basePath, char* modName) {
         char *modNameNoColor = str_remove_color_codes(mod->name);
         if (strstr(modNameNoColor, "[CS]") == modNameNoColor) {
             mod->category = strdup("cs");
+        } else if (strstr(modNameNoColor, "[PET]") == modNameNoColor) {
+            mod->category = strdup("pet");
         }
         free(modNameNoColor);
     }

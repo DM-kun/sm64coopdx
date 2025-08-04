@@ -13,6 +13,9 @@
 #include "djui_panel_host_mods.h"
 #include "djui_panel_pause.h"
 #include "pc/thread.h"
+#if defined(_WIN32) || defined(_WIN64)
+#include <windows.h>
+#endif
 
 #define DJUI_MOD_PANEL_WIDTH (410.0f + (16 * 2.0f))
 #define MOD_CATEGORY_ALL 0
@@ -38,6 +41,7 @@ struct ModCategory sCategories[] = {
     { "GAMEMODES", "gamemode" },
     { "MOVESETS", "moveset" },
     { "CHARACTER_SELECT", "cs" },
+    { "WIDDLE_PETS", "pet" },
 };
 static const int numCategories = sizeof(sCategories) / sizeof(sCategories[0]);
 
@@ -95,7 +99,7 @@ static void djui_mod_checkbox_on_hover_end(UNUSED struct DjuiBase* base) {
 static void djui_mod_checkbox_on_value_change(UNUSED struct DjuiBase* base) {
     mods_update_selectable();
 
-    if (mods_get_enabled_count() - mods_get_character_select_count() >= 10) {
+    if (mods_get_enabled_count() - (mods_get_category_count("cs") + mods_get_category_count("pet")) >= 10) {
         if (!sWarned) {
             sWarned = true;
             djui_popup_create(DLANG(HOST_MODS, WARNING), 3);
@@ -116,6 +120,33 @@ static void djui_mod_checkbox_on_value_change(UNUSED struct DjuiBase* base) {
         // iterate
         node = node->next;
     }
+}
+
+static void djui_mod_button_open_link(struct DjuiBase* base) {
+    char* url = "";
+
+    if (base->tag >= 0 && base->tag < gLocalMods.entryCount) {
+        struct Mod* mod = gLocalMods.entries[base->tag];
+        char* link = mod->link;
+        if (link != NULL) {
+            url = mod->link;
+        }
+    }
+
+#if defined(_WIN32) || defined(_WIN64)
+    // Windows
+    ShellExecuteA(NULL, "open", url, NULL, NULL, SW_SHOWNORMAL);
+#elif __linux__
+    // Linux
+    char command[512];
+    snprintf(command, sizeof(command), "xdg-open \"%s\"", url);
+    system(command);
+#elif __APPLE__
+    // macOS
+    char command[512];
+    snprintf(command, sizeof(command), "open \"%s\"", url);
+    system(command);
+#endif
 }
 
 static void djui_panel_host_mods_destroy(struct DjuiBase* base) {
@@ -157,10 +188,31 @@ void djui_panel_host_mods_add_mods(struct DjuiBase* layoutBase) {
                 break;
             }
         }
-        struct DjuiCheckbox* checkbox = djui_checkbox_create(layoutBase, mod->name, &mod->enabled, djui_mod_checkbox_on_value_change);
+
+        // truncuate mod name
+        char modName[36];
+        if ((int)strlen(mod->name) > 32) {
+            strncpy(modName, mod->name, 32);
+            modName[32] = '\0';
+            strcat(modName, "...");
+        } else {
+            strcpy(modName, mod->name);
+        }
+        struct DjuiCheckbox* checkbox = djui_checkbox_create(layoutBase, modName, &mod->enabled, djui_mod_checkbox_on_value_change);
         checkbox->base.tag = i;
         djui_base_set_enabled(&checkbox->base, mod->selectable);
         djui_interactable_hook_hover(&checkbox->base, djui_mod_checkbox_on_hover, djui_mod_checkbox_on_hover_end);
+
+        const char* mod_site = "https://mods.sm64coopdx.com/mods/";
+        if (mod->link && strncmp(mod->link, mod_site, strlen(mod_site)) == 0) {
+            struct DjuiButton* button = djui_button_create(&checkbox->base, DLANG(HOST_MODS, OPEN_LINK), DJUI_BUTTON_STYLE_NORMAL, djui_mod_button_open_link);
+            djui_base_set_size_type(&button->base, DJUI_SVT_RELATIVE, DJUI_SVT_RELATIVE);
+            djui_base_set_size(&button->base, 0.3f, 1.0f);
+            djui_base_set_alignment(&button->base, DJUI_HALIGN_RIGHT, DJUI_VALIGN_CENTER);
+            djui_base_set_location(&button->base, button->base.x.value + 50, button->base.y.value);
+            button->base.tag = i;
+        }
+
         foundAny = true;
     }
     if (!foundAny) {

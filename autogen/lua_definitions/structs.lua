@@ -1265,11 +1265,13 @@
 --- @field public incompatible string
 --- @field public index integer
 --- @field public isDirectory boolean
+--- @field public link string
 --- @field public name string
 --- @field public pausable boolean
 --- @field public relativePath string
 --- @field public renderBehindHud boolean
 --- @field public selectable boolean
+--- @field public version string
 
 --- @class ModAudio
 --- @field public baseVolume number

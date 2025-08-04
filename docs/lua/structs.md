@@ -1917,11 +1917,13 @@
 | incompatible | `string` | read-only |
 | index | `integer` | read-only |
 | isDirectory | `boolean` | read-only |
+| link | `string` | read-only |
 | name | `string` | read-only |
 | pausable | `boolean` | read-only |
 | relativePath | `string` | read-only |
 | renderBehindHud | `boolean` | read-only |
 | selectable | `boolean` | read-only |
+| version | `string` | read-only |
 
 [:arrow_up_small:](#)
 

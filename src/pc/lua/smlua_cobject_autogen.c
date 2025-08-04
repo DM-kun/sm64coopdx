@@ -1572,7 +1572,7 @@ static struct LuaObjectField sMarioStateFields[LUA_MARIO_STATE_FIELD_COUNT] = {
     { "waterLevel",                LVT_S16,       offsetof(struct MarioState, waterLevel),                false, LOT_NONE,              1, sizeof(s16)                       },
 };
 
-#define LUA_MOD_FIELD_COUNT 16
+#define LUA_MOD_FIELD_COUNT 18
 static struct LuaObjectField sModFields[LUA_MOD_FIELD_COUNT] = {
     { "basePath",             LVT_STRING,   offsetof(struct Mod, basePath),             true, LOT_NONE, 1, sizeof(char)   },
     { "category",             LVT_STRING_P, offsetof(struct Mod, category),             true, LOT_NONE, 1, sizeof(char*)  },
@@ -1585,11 +1585,13 @@ static struct LuaObjectField sModFields[LUA_MOD_FIELD_COUNT] = {
     { "incompatible",         LVT_STRING_P, offsetof(struct Mod, incompatible),         true, LOT_NONE, 1, sizeof(char*)  },
     { "index",                LVT_S32,      offsetof(struct Mod, index),                true, LOT_NONE, 1, sizeof(s32)    },
     { "isDirectory",          LVT_BOOL,     offsetof(struct Mod, isDirectory),          true, LOT_NONE, 1, sizeof(bool)   },
+    { "link",                 LVT_STRING_P, offsetof(struct Mod, link),                 true, LOT_NONE, 1, sizeof(char*)  },
     { "name",                 LVT_STRING_P, offsetof(struct Mod, name),                 true, LOT_NONE, 1, sizeof(char*)  },
     { "pausable",             LVT_BOOL,     offsetof(struct Mod, pausable),             true, LOT_NONE, 1, sizeof(bool)   },
     { "relativePath",         LVT_STRING,   offsetof(struct Mod, relativePath),         true, LOT_NONE, 1, sizeof(char)   },
     { "renderBehindHud",      LVT_BOOL,     offsetof(struct Mod, renderBehindHud),      true, LOT_NONE, 1, sizeof(bool)   },
     { "selectable",           LVT_BOOL,     offsetof(struct Mod, selectable),           true, LOT_NONE, 1, sizeof(bool)   },
+    { "version",              LVT_STRING_P, offsetof(struct Mod, version),              true, LOT_NONE, 1, sizeof(char*)  },
 //  { "size",                 LVT_???,      offsetof(struct Mod, size),                 true, LOT_???,  1, sizeof(size_t) }, <--- UNIMPLEMENTED
 };
 

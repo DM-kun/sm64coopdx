@@ -145,7 +145,7 @@ void djui_panel_main_menu_create(struct DjuiBase* caller) {
         if (gDjuiInMainMenu) {
             // copy sound choices from gMainMenuSounds
             int numSounds = sizeof(gMainMenuSounds) / sizeof(gMainMenuSounds[0]);
-            // if stage roll is on, we shouldn't be allowed to use Stage Music, so remove the entry
+            // if staff roll is on, we shouldn't be allowed to use Stage Music, so remove the entry
             if (configMenuStaffRoll) {
                 numSounds -= 1;
             }

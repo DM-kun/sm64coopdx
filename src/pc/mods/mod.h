@@ -9,6 +9,8 @@
 #define MOD_INCOMPATIBLE_MAX_LENGTH 256
 #define MOD_CATEGORY_MAX_LENGTH 64
 #define MOD_DESCRIPTION_MAX_LENGTH 800
+#define MOD_VERSION_MAX_LENGTH 8
+#define MOD_LINK_MAX_LENGTH 256
 
 struct Mods;
 
@@ -29,6 +31,8 @@ struct Mod {
     char* incompatible;
     char* category;
     char* description;
+    char* version;
+    char* link;
     char relativePath[SYS_MAX_PATH];
     char basePath[SYS_MAX_PATH];
     struct ModFile* files;
