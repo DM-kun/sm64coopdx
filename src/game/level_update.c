@@ -6,7 +6,6 @@
 #include "seq_ids.h"
 #include "dialog_ids.h"
 #include "audio/external.h"
-#include "level_update.h"
 #include "game_init.h"
 #include "level_update.h"
 #include "main.h"
@@ -50,6 +49,11 @@
 #include "game/screen_transition.h"
 
 #include "engine/level_script.h"
+
+#ifdef ARCHIPELAGO
+#include "pc/archipelago/sm64ap.h"
+#include "levels/castle_inside/header.h"
+#endif
 
 #define MENU_LEVEL_MIN 0
 #define MENU_LEVEL_MAX 17
@@ -302,11 +306,11 @@ void load_level_init_text(u32 arg) {
     u32 dialogID = gCurrentArea->dialog[arg];
 
     if (dialogID == gBehaviorValues.dialogs.VanishCourseDialog) {
-        gotAchievement = save_file_get_flags() & SAVE_FLAG_HAVE_VANISH_CAP;
+        gotAchievement = save_file_get_flags(SAVE_FLAG_HAVE_VANISH_CAP);
     } else if (dialogID == gBehaviorValues.dialogs.MetalCourseDialog) {
-        gotAchievement = save_file_get_flags() & SAVE_FLAG_HAVE_METAL_CAP;
+        gotAchievement = save_file_get_flags(SAVE_FLAG_HAVE_METAL_CAP);
     } else if (dialogID == gBehaviorValues.dialogs.WingCourseDialog) {
-        gotAchievement = save_file_get_flags() & SAVE_FLAG_HAVE_WING_CAP;
+        gotAchievement = save_file_get_flags(SAVE_FLAG_HAVE_WING_CAP);
     } else if (dialogID == 255) {
         gotAchievement = TRUE;
     } else {
@@ -647,8 +651,14 @@ void check_instant_warp(void) {
     s16 cameraAngle;
     struct Surface *floor;
 
+#ifdef ARCHIPELAGO
     if (gCurrLevelNum == LEVEL_CASTLE
-        && save_file_get_total_star_count(gCurrSaveFileNum - 1, COURSE_MIN - 1, COURSE_MAX - 1) >= gLevelValues.infiniteStairsRequirement) {
+        && save_file_get_total_star_count(gCurrSaveFileNum - 1, COURSE_MIN - 1, COURSE_MAX - 1) >= SM64AP_GetRequiredStars(gLevelValues.infiniteStairsRequirement))
+#else
+    if (gCurrLevelNum == LEVEL_CASTLE
+        && save_file_get_total_star_count(gCurrSaveFileNum - 1, COURSE_MIN - 1, COURSE_MAX - 1) >= gLevelValues.infiniteStairsRequirement)
+#endif
+    {
         return;
     }
 
@@ -749,6 +759,9 @@ s16 music_changed_through_warp(s16 arg) {
  * Set the current warp type and destination level/area/node.
  */
 void initiate_warp(s16 destLevel, s16 destArea, s16 destWarpNode, s32 arg) {
+#ifdef ARCHIPELAGO
+    SM64AP_RedirectWarp(&gCurrLevelNum, &destLevel, &(gCurrentArea->index), &destArea, &destWarpNode, sSourceWarpNodeId == WARP_NODE_DEATH, sDelayedWarpOp);
+#endif
 
     smlua_call_event_hooks_before_warp(HOOK_BEFORE_WARP, &destLevel, &destArea, &destWarpNode, &arg);
 
@@ -791,8 +804,77 @@ struct WarpNode *get_painting_warp_node(void) {
     return warpNode;
 }
 
+#ifdef ARCHIPELAGO
+void reject_mario_from_painting(s16 courseNum, s16 destArea) {
+    Vec3s rejectAngle = {0, 0, 0};
+    f32 newYaw = 0.0f;
+    f32 perpYaw = 0.0f;
+    Vec3f ejectPos = {0.0f,0.0f,0.0f};
+    f32 ejectDistance = 50.0f;
+    f32 minYDiff = 30.0f;
+    struct Painting p;
+    switch(courseNum) {
+        case 1:  p = bob_painting;      break;
+        case 2:  p = wf_painting;       break;
+        case 3:  p = jrb_painting;      break;
+        case 4:  p = ccm_painting;      break;
+        // BBH and HMC are skipped here
+        case 7:  p = lll_painting;      break;
+        case 8:  p = ssl_painting;      break;
+        case 9:  p = ddd_painting;      break;
+        case 10: p = sl_painting;       break;
+        case 11: p = wdw_painting;      break;
+        case 12: p = ttm_painting;      break;
+        case 13: 
+            p = destArea == 1 ? thi_huge_painting : thi_tiny_painting;
+            break;
+        case 14: p = ttc_painting;      break;
+    }
+    newYaw = p.yaw;
+    perpYaw = p.yaw - 90.0f;
+    // Painting placement is by the bottom left corner
+    vec3f_set(ejectPos, gMarioState->pos[0], gMarioState->pos[1] < p.posY+minYDiff? p.posY+minYDiff : gMarioState->pos[1], gMarioState->pos[2]);
+    // Adjust it out of the painting slightly; sin/cosf use radians, convert the yaw to radians
+    ejectPos[0] += ejectDistance * sinf(newYaw * M_PI / 180.0);
+    ejectPos[2] += ejectDistance * cosf(newYaw * M_PI / 180.0);
+
+    if(gMarioState->forwardVel > 0.0f) {
+        // Eject mario backward, which means face him toward the painting rather than away
+        newYaw = (((s16)newYaw + 180) % 360) + 0.0f;
+    }
+    // Convert to s16 representation of the angle; -2^15 = -180 degree, 2^15-1 = 180 degree, 0 = 0
+    rejectAngle[1] =  (s16)((newYaw > 180.0f? 180.0f-newYaw : newYaw)/180.0f*0x7FFF);
+    vec3s_copy(gMarioState->faceAngle, rejectAngle);
+    vec3f_copy(gMarioState->pos, ejectPos);
+
+    gMarioState->marioObj->oPosX = gMarioState->pos[0];
+    gMarioState->marioObj->oPosZ = gMarioState->pos[2];
+
+    vec3f_copy(gMarioState->marioObj->header.gfx.pos, gMarioState->pos);
+
+    if(gMarioState->forwardVel > 0.0f) {
+        set_mario_action(gMarioState, ACT_HARD_BACKWARD_AIR_KB, 0);
+    } else {
+        set_mario_action(gMarioState, ACT_HARD_FORWARD_AIR_KB, 0);
+    }
+    play_sound(SOUND_GENERAL_PAINTING_EJECT, gDefaultSoundArgs);
+}
+#endif
+
 static void initiate_painting_warp_node(struct WarpNode *pWarpNode) {
     struct WarpNode warpNode = *pWarpNode;
+
+#ifdef ARCHIPELAGO
+    // If we don't have the painting for this course, kick Mario out
+    // The function takes care of handling if painting locking is not enabled
+    s16 destCourse = gLevelToCourseNumTable[warpNode.destLevel - 1];
+    // Only check for paintings when in the castle, otherwise they could be interior warps and we don't want to block those
+    if(gCurrLevelNum == LEVEL_CASTLE && !SM64AP_HavePainting(destCourse)) {
+        // If we're not allowed we need to be ejected forcefully enough not to fall back in
+        reject_mario_from_painting(destCourse, warpNode.destArea);
+        return;
+    }
+#endif
 
     if (!(warpNode.destLevel & 0x80)) {
         sWarpCheckpointActive = check_warp_checkpoint(&warpNode);
@@ -935,6 +1017,9 @@ s16 level_trigger_warp(struct MarioState *m, s32 warpOp) {
                 break;
 
             case WARP_OP_LOOK_UP: // enter totwc
+#ifdef ARCHIPELAGO
+                SM64AP_SetClockToTTCState();
+#endif
                 sDelayedWarpTimer = 30;
                 sSourceWarpNodeId = WARP_NODE_F2;
                 verify_warp(m, false);
@@ -973,6 +1058,9 @@ s16 level_trigger_warp(struct MarioState *m, s32 warpOp) {
 
             case WARP_OP_WARP_OBJECT:
                 if (m->usedObj == NULL) { break; }
+#ifdef ARCHIPELAGO
+                SM64AP_SetClockToTTCState();
+#endif
                 sDelayedWarpTimer = 20;
                 sSourceWarpNodeId = (m->usedObj->oBehParams & 0x00FF0000) >> 16;
                 verify_warp(m, false);
@@ -1030,6 +1118,9 @@ void initiate_delayed_warp(void) {
                     gChangeLevel = gLevelValues.entryLevel;
                     gMarioStates[0].numLives = 4;
                     gMarioStates[0].health = 0x880;
+#ifdef ARCHIPELAGO
+                    SM64AP_DeathLinkSend();
+#endif
                     break;
 
                 case WARP_OP_CREDITS_END:
@@ -1156,7 +1247,11 @@ void update_hud_values(void) {
         }
 #endif
 
+#ifdef ARCHIPELAGO
+        gHudDisplay.stars = SM64AP_GetStars();
+#else
         gHudDisplay.stars = gMarioState->numStars;
+#endif
         gHudDisplay.lives = gMarioState->numLives;
         gHudDisplay.keys = gMarioState->numKeys;
 
@@ -1164,6 +1259,12 @@ void update_hud_values(void) {
             play_sound(SOUND_MENU_POWER_METER, gGlobalSoundSource);
         }
         gHudDisplay.wedges = numHealthWedges;
+
+#ifdef ARCHIPELAGO
+        if (SM64AP_DeathLinkPending()) {
+            gMarioState->health = 0xFF;
+        }
+#endif
 
         if (gMarioState->hurtCounter > 0) {
             gHudDisplay.flags |= HUD_DISPLAY_FLAG_EMPHASIZE_POWER;

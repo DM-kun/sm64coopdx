@@ -1,5 +1,6 @@
 #include "socket/socket.h"
 #include "coopnet/coopnet.h"
+#include "archipelago/ap_net.h"
 #include <stdio.h>
 #include "network.h"
 #include "object_fields.h"
@@ -101,6 +102,9 @@ void network_set_system(enum NetworkSystemType nsType) {
         case NS_SOCKET:  gNetworkSystem = &gNetworkSystemSocket; break;
 #ifdef COOPNET
         case NS_COOPNET: gNetworkSystem = &gNetworkSystemCoopNet; break;
+#endif
+#ifdef ARCHIPELAGO
+        case NS_AP: gNetworkSystem = &gNetworkSystemArchipelago; break;
 #endif
         default: gNetworkSystem = &gNetworkSystemSocket; LOG_ERROR("Unknown network system: %d", nsType); break;
     }
@@ -458,8 +462,17 @@ void network_reconnect_begin(void) {
 #ifdef COOPNET
     sNetworkReconnectType = (gNetworkSystem == &gNetworkSystemCoopNet)
                           ? NS_COOPNET
+#ifdef ARCHIPELAGO
+                          : (gNetworkSystem == &gNetworkSystemArchipelago)
+                          ? NS_AP
+#endif
                           : NS_SOCKET;
 #else
+#ifdef ARCHIPELAGO
+    sNetworkReconnectType = (gNetworkSystem == &gNetworkSystemArchipelago)
+                          ? NS_AP
+                          : NS_SOCKET;
+#endif
     sNetworkReconnectType = NS_SOCKET;
 #endif
 
@@ -476,6 +489,8 @@ static void network_reconnect_update(void) {
         network_set_system(NS_SOCKET);
     } else if (sNetworkReconnectType == NS_COOPNET) {
         network_set_system(NS_COOPNET);
+    } else if (sNetworkReconnectType == NS_AP) {
+        network_set_system(NS_AP);
     }
 
     network_init(NT_CLIENT, true);

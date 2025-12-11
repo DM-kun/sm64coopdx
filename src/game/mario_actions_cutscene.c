@@ -36,6 +36,9 @@
 #include "pc/network/network.h"
 #include "pc/lua/smlua.h"
 #include "pc/lua/smlua_hooks.h"
+#ifdef ARCHIPELAGO
+#include "pc/archipelago/sm64ap.h"
+#endif
 
 // TODO: put this elsewhere
 enum SaveOption { SAVE_OPT_SAVE_AND_CONTINUE = 1, /*SAVE_OPT_SAVE_AND_QUIT, SAVE_OPT_SAVE_EXIT_GAME,*/ SAVE_OPT_CONTINUE_DONT_SAVE };
@@ -1452,6 +1455,9 @@ s32 act_death_exit(struct MarioState *m) {
         play_character_sound(m, CHAR_SOUND_OOOF2);
 #endif
         queue_rumble_data_mario(m, 5, 80);
+#ifdef ARCHIPELAGO
+        SM64AP_DeathLinkSend();
+#endif
         // restore 7.75 units of health
         m->healCounter = 31;
     }
@@ -1467,6 +1473,9 @@ s32 act_unused_death_exit(struct MarioState *m) {
         play_character_sound(m, CHAR_SOUND_OOOF);
 #else
         play_character_sound(m, CHAR_SOUND_OOOF2);
+#endif
+#ifdef ARCHIPELAGO
+        SM64AP_DeathLinkSend();
 #endif
         // restore 7.75 units of health
         m->healCounter = 31;
@@ -1485,6 +1494,9 @@ s32 act_falling_death_exit(struct MarioState *m) {
         play_character_sound(m, CHAR_SOUND_OOOF2);
 #endif
         queue_rumble_data_mario(m, 5, 80);
+#ifdef ARCHIPELAGO
+        SM64AP_DeathLinkSend();
+#endif
         // restore 7.75 units of health
         m->healCounter = 31;
     }
@@ -1531,6 +1543,9 @@ s32 act_special_death_exit(struct MarioState *m) {
 
     if (launch_mario_until_land(m, ACT_HARD_BACKWARD_GROUND_KB, CHAR_ANIM_BACKWARD_AIR_KB, -24.0f)) {
         queue_rumble_data_mario(m, 5, 80);
+#ifdef ARCHIPELAGO
+        SM64AP_DeathLinkSend();
+#endif
         m->healCounter = 31;
     }
     // show Mario

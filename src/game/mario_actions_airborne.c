@@ -21,6 +21,9 @@
 #include "pc/network/network.h"
 #include "pc/lua/smlua.h"
 #include "hardcoded.h"
+#ifdef ARCHIPELAGO
+#include "pc/archipelago/sm64ap.h"
+#endif
 
 /* |description|
 Plays a spinning sound at specific animation frames for flips (usually side flips or certain jump flips).
@@ -145,7 +148,20 @@ Pressing the B button in the air can trigger a jump kick (at lower speeds) or a 
 s32 check_kick_or_dive_in_air(struct MarioState *m) {
     if (!m) { return 0; }
     if (m->input & INPUT_B_PRESSED) {
+#ifdef ARCHIPELAGO
+        if (m->forwardVel > 28.0f) {
+            if (SM64AP_CanDive()) {
+                return set_mario_action(m, ACT_DIVE, 0);
+            } else {
+                return FALSE;
+            }
+        }
+        else if (SM64AP_CanKick()) {
+            return set_mario_action(m, ACT_JUMP_KICK, 0);
+        }
+#else
         return set_mario_action(m, m->forwardVel > 28.0f ? ACT_DIVE : ACT_JUMP_KICK, 0);
+#endif
     }
     return FALSE;
 }
@@ -554,7 +570,12 @@ s32 act_jump(struct MarioState *m) {
         return TRUE;
     }
 
-    if (m->input & INPUT_Z_PRESSED) {
+#ifdef ARCHIPELAGO
+    if ((m->input & INPUT_Z_PRESSED) && SM64AP_CanGroundPound())
+#else
+    if (m->input & INPUT_Z_PRESSED)
+#endif
+    {
         return set_mario_action(m, ACT_GROUND_POUND, 0);
     }
 
@@ -574,7 +595,12 @@ s32 act_double_jump(struct MarioState *m) {
         return TRUE;
     }
 
-    if (m->input & INPUT_Z_PRESSED) {
+#ifdef ARCHIPELAGO
+    if ((m->input & INPUT_Z_PRESSED) && SM64AP_CanGroundPound())
+#else
+    if (m->input & INPUT_Z_PRESSED)
+#endif
+    {
         return set_mario_action(m, ACT_GROUND_POUND, 0);
     }
 
@@ -590,11 +616,21 @@ s32 act_triple_jump(struct MarioState *m) {
         return set_mario_action(m, ACT_SPECIAL_TRIPLE_JUMP, 0);
     }
 
-    if (m->input & INPUT_B_PRESSED) {
+#ifdef ARCHIPELAGO
+    if ((m->input & INPUT_B_PRESSED) && SM64AP_CanDive())
+#else
+    if (m->input & INPUT_B_PRESSED)
+#endif
+    {
         return set_mario_action(m, ACT_DIVE, 0);
     }
 
-    if (m->input & INPUT_Z_PRESSED) {
+#ifdef ARCHIPELAGO
+    if ((m->input & INPUT_Z_PRESSED) && SM64AP_CanGroundPound()) 
+#else
+    if (m->input & INPUT_Z_PRESSED)
+#endif
+    {
         return set_mario_action(m, ACT_GROUND_POUND, 0);
     }
 
@@ -614,7 +650,13 @@ s32 act_triple_jump(struct MarioState *m) {
 
 s32 act_backflip(struct MarioState *m) {
     if (!m) { return 0; }
-    if (m->input & INPUT_Z_PRESSED) {
+
+#ifdef ARCHIPELAGO
+    if ((m->input & INPUT_Z_PRESSED) && SM64AP_CanGroundPound())
+#else
+    if (m->input & INPUT_Z_PRESSED)
+#endif
+    {
         return set_mario_action(m, ACT_GROUND_POUND, 0);
     }
 
@@ -632,11 +674,21 @@ s32 act_freefall(struct MarioState *m) {
     if (!m) { return 0; }
     s32 animation = 0;
 
-    if (m->input & INPUT_B_PRESSED) {
+#ifdef ARCHIPELAGO
+    if ((m->input & INPUT_B_PRESSED) && SM64AP_CanDive())
+#else
+    if (m->input & INPUT_B_PRESSED)
+#endif
+    {
         return set_mario_action(m, ACT_DIVE, 0);
     }
 
-    if (m->input & INPUT_Z_PRESSED) {
+#ifdef ARCHIPELAGO
+    if ((m->input & INPUT_Z_PRESSED) && SM64AP_CanGroundPound())
+#else
+    if (m->input & INPUT_Z_PRESSED)
+#endif
+    {
         return set_mario_action(m, ACT_GROUND_POUND, 0);
     }
 
@@ -666,7 +718,12 @@ s32 act_hold_jump(struct MarioState *m) {
         return set_mario_action(m, ACT_AIR_THROW, 0);
     }
 
-    if (m->input & INPUT_Z_PRESSED) {
+#ifdef ARCHIPELAGO
+    if ((m->input & INPUT_Z_PRESSED) && SM64AP_CanGroundPound())
+#else
+    if (m->input & INPUT_Z_PRESSED)
+#endif
+    {
         return drop_and_set_mario_action(m, ACT_GROUND_POUND, 0);
     }
 
@@ -693,7 +750,12 @@ s32 act_hold_freefall(struct MarioState *m) {
         return set_mario_action(m, ACT_AIR_THROW, 0);
     }
 
-    if (m->input & INPUT_Z_PRESSED) {
+#ifdef ARCHIPELAGO
+    if ((m->input & INPUT_Z_PRESSED) && SM64AP_CanGroundPound())
+#else
+    if (m->input & INPUT_Z_PRESSED)
+#endif
+    {
         return drop_and_set_mario_action(m, ACT_GROUND_POUND, 0);
     }
 
@@ -703,11 +765,22 @@ s32 act_hold_freefall(struct MarioState *m) {
 
 s32 act_side_flip(struct MarioState *m) {
     if (!m) { return 0; }
-    if (m->input & INPUT_B_PRESSED) {
+
+#ifdef ARCHIPELAGO
+    if ((m->input & INPUT_B_PRESSED) && SM64AP_CanDive())
+#else
+    if (m->input & INPUT_B_PRESSED)
+#endif
+    {
         return set_mario_action(m, ACT_DIVE, 0);
     }
 
-    if (m->input & INPUT_Z_PRESSED) {
+#ifdef ARCHIPELAGO
+    if ((m->input & INPUT_Z_PRESSED) && SM64AP_CanGroundPound())
+#else
+    if (m->input & INPUT_Z_PRESSED)
+#endif
+    {
         return set_mario_action(m, ACT_GROUND_POUND, 0);
     }
 
@@ -727,11 +800,22 @@ s32 act_side_flip(struct MarioState *m) {
 
 s32 act_wall_kick_air(struct MarioState *m) {
     if (!m) { return 0; }
-    if (m->input & INPUT_B_PRESSED) {
+
+#ifdef ARCHIPELAGO
+    if ((m->input & INPUT_B_PRESSED) && SM64AP_CanDive())
+#else
+    if (m->input & INPUT_B_PRESSED)
+#endif
+    {
         return set_mario_action(m, ACT_DIVE, 0);
     }
 
-    if (m->input & INPUT_Z_PRESSED) {
+#ifdef ARCHIPELAGO
+    if ((m->input & INPUT_Z_PRESSED) && SM64AP_CanGroundPound())
+#else
+    if (m->input & INPUT_Z_PRESSED)
+#endif
+    {
         return set_mario_action(m, ACT_GROUND_POUND, 0);
     }
 
@@ -1006,7 +1090,13 @@ s32 act_hold_water_jump(struct MarioState *m) {
 
 s32 act_steep_jump(struct MarioState *m) {
     if (!m) { return 0; }
-    if (m->input & INPUT_B_PRESSED) {
+
+#ifdef ARCHIPELAGO
+    if ((m->input & INPUT_B_PRESSED) && SM64AP_CanDive())
+#else
+    if (m->input & INPUT_B_PRESSED)
+#endif
+    {
         return set_mario_action(m, ACT_DIVE, 0);
     }
 
@@ -1296,7 +1386,13 @@ and the `wallKickTimer` allow, Mario transitions to `ACT_WALL_KICK_AIR`
 |descriptionEnd| */
 s32 check_wall_kick(struct MarioState *m) {
     if (!m) { return 0; }
-    if ((m->input & INPUT_A_PRESSED) && m->wallKickTimer != 0 && m->prevAction == ACT_AIR_HIT_WALL) {
+
+#ifdef ARCHIPELAGO
+    if ((m->input & INPUT_A_PRESSED) && m->wallKickTimer != 0 && m->prevAction == ACT_AIR_HIT_WALL && SM64AP_CanWallKick())
+#else
+    if ((m->input & INPUT_A_PRESSED) && m->wallKickTimer != 0 && m->prevAction == ACT_AIR_HIT_WALL)
+#endif
+    {
         m->faceAngle[1] += 0x8000;
         return set_mario_action(m, ACT_WALL_KICK_AIR, 0);
     }
@@ -1467,7 +1563,12 @@ s32 act_air_hit_wall(struct MarioState *m) {
     }
 
     if (++(m->actionTimer) <= 2) {
-        if (m->input & INPUT_A_PRESSED) {
+#ifdef ARCHIPELAGO
+        if ((m->input & INPUT_A_PRESSED) && SM64AP_CanWallKick())
+#else
+        if (m->input & INPUT_A_PRESSED)
+#endif
+        {
             m->vel[1] = 52.0f;
             m->faceAngle[1] += 0x8000;
             return set_mario_action(m, ACT_WALL_KICK_AIR, 0);
@@ -1924,7 +2025,12 @@ s32 act_flying(struct MarioState *m) {
     if (!m) { return 0; }
     s16 startPitch = m->faceAngle[0];
 
-    if (m->input & INPUT_Z_PRESSED) {
+#ifdef ARCHIPELAGO
+    if ((m->input & INPUT_Z_PRESSED) && SM64AP_CanGroundPound())
+#else
+    if (m->input & INPUT_Z_PRESSED)
+#endif
+    {
         if (m->area->camera->mode == CAMERA_MODE_BEHIND_MARIO) {
             if (m->playerIndex == 0) {
                 if (!gNewCamera.isActive) {
@@ -2124,7 +2230,12 @@ s32 act_riding_hoot(struct MarioState *m) {
 s32 act_flying_triple_jump(struct MarioState *m) {
     if (!m) { return 0; }
 #ifndef VERSION_JP
-    if (m->input & (INPUT_B_PRESSED | INPUT_Z_PRESSED)) {
+#ifdef ARCHIPELAGO
+    if (m->input & (INPUT_B_PRESSED | INPUT_Z_PRESSED) && SM64AP_CanGroundPound())
+#else
+    if (m->input & (INPUT_B_PRESSED | INPUT_Z_PRESSED))
+#endif
+    {
         if (m->playerIndex == 0 && m->area->camera->mode == CAMERA_MODE_BEHIND_MARIO) {
             if (!gNewCamera.isActive) {
                 set_camera_mode(m->area->camera, m->area->camera->defMode, 1);
@@ -2133,18 +2244,39 @@ s32 act_flying_triple_jump(struct MarioState *m) {
                 gLakituState.mode = CAMERA_MODE_NEWCAM;
             }
         }
-        if (m->input & INPUT_B_PRESSED) {
+#ifdef ARCHIPELAGO
+        if ((m->input & INPUT_B_PRESSED) && SM64AP_CanDive())
+#else
+        if (m->input & INPUT_B_PRESSED)
+#endif
+        {
             return set_mario_action(m, ACT_DIVE, 0);
-        } else {
+        }
+#ifdef ARCHIPELAGO
+        else if(SM64AP_CanGroundPound())
+#else
+        else
+#endif
+        {
             return set_mario_action(m, ACT_GROUND_POUND, 0);
         }
     }
 #else
-    if (m->input & INPUT_B_PRESSED) {
+#ifdef ARCHIPELAGO
+    if ((m->input & INPUT_B_PRESSED) && SM64AP_CanDive())
+#else
+    if (m->input & INPUT_B_PRESSED)
+#endif
+    {
         return set_mario_action(m, ACT_DIVE, 0);
     }
 
-    if (m->input & INPUT_Z_PRESSED) {
+#ifdef ARCHIPELAGO
+    if ((m->input & INPUT_Z_PRESSED) && SM64AP_CanGroundPound())
+#else
+    if (m->input & INPUT_Z_PRESSED)
+#endif
+    {
         return set_mario_action(m, ACT_GROUND_POUND, 0);
     }
 #endif
@@ -2251,11 +2383,22 @@ s32 act_vertical_wind(struct MarioState *m) {
 
 s32 act_special_triple_jump(struct MarioState *m) {
     if (!m) { return 0; }
-    if (m->input & INPUT_B_PRESSED) {
+
+#ifdef ARCHIPELAGO
+    if ((m->input & INPUT_B_PRESSED) && SM64AP_CanDive())
+#else
+    if (m->input & INPUT_B_PRESSED)
+#endif
+    {
         return set_mario_action(m, ACT_DIVE, 0);
     }
 
-    if (m->input & INPUT_Z_PRESSED) {
+#ifdef ARCHIPELAGO
+    if ((m->input & INPUT_Z_PRESSED) && SM64AP_CanGroundPound())
+#else
+    if (m->input & INPUT_Z_PRESSED)
+#endif
+    {
         return set_mario_action(m, ACT_GROUND_POUND, 0);
     }
 

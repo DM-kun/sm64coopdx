@@ -33,6 +33,9 @@
 #include "pc/network/lag_compensation.h"
 #include "pc/lua/smlua_hooks.h"
 #include "pc/lua/utils/smlua_obj_utils.h"
+#ifdef ARCHIPELAGO
+#include "pc/archipelago/sm64ap.h"
+#endif
 
 u8 sDelayInvincTimer;
 s16 gInteractionInvulnerable;
@@ -1026,6 +1029,10 @@ u32 interact_bbh_entrance(struct MarioState *m, UNUSED u32 interactType, struct 
         m->interactObj = o;
         m->usedObj = o;
 
+#ifdef ARCHIPELAGO
+        SM64AP_SetClockToTTCState();
+#endif
+
         if (m->action & ACT_FLAG_AIR) {
             return set_mario_action(m, ACT_BBH_ENTER_SPIN, 0);
         }
@@ -1113,16 +1120,15 @@ u8 prevent_interact_door(struct MarioState* m, struct Object* o) {
 u32 interact_warp_door(struct MarioState *m, UNUSED u32 interactType, struct Object *o) {
     if (!m || !o) { return FALSE; }
     u32 doorAction = 0;
-    u32 saveFlags = save_file_get_flags();
     s16 warpDoorId = o->oBehParams >> 24;
     u32 actionArg;
 
     if (prevent_interact_door(m, o)) { return FALSE; }
 
     if (m->action == ACT_WALKING || m->action == ACT_DECELERATING) {
-        if (warpDoorId == 1 && !(saveFlags & SAVE_FLAG_UNLOCKED_UPSTAIRS_DOOR)) {
-            if (!(saveFlags & SAVE_FLAG_HAVE_KEY_2)) {
-                if (display_door_dialog(m, (saveFlags & SAVE_FLAG_HAVE_KEY_1) ? gBehaviorValues.dialogs.KeyDoor1HaveDialog : gBehaviorValues.dialogs.KeyDoor1DontHaveDialog)) {
+        if (warpDoorId == 1 && !(save_file_get_flags(SAVE_FLAG_UNLOCKED_UPSTAIRS_DOOR))) {
+            if (!(save_file_get_flags(SAVE_FLAG_HAVE_KEY_2))) {
+                if (display_door_dialog(m, (save_file_get_flags(SAVE_FLAG_HAVE_KEY_1)) ? gBehaviorValues.dialogs.KeyDoor1HaveDialog : gBehaviorValues.dialogs.KeyDoor1DontHaveDialog)) {
                     sDisplayingDoorText = TRUE;
                 }
                 return FALSE;
@@ -1131,9 +1137,9 @@ u32 interact_warp_door(struct MarioState *m, UNUSED u32 interactType, struct Obj
             doorAction = ACT_UNLOCKING_KEY_DOOR;
         }
 
-        if (warpDoorId == 2 && !(saveFlags & SAVE_FLAG_UNLOCKED_BASEMENT_DOOR)) {
-            if (!(saveFlags & SAVE_FLAG_HAVE_KEY_1)) {
-                if (display_door_dialog(m, (saveFlags & SAVE_FLAG_HAVE_KEY_2) ? gBehaviorValues.dialogs.KeyDoor2HaveDialog : gBehaviorValues.dialogs.KeyDoor2DontHaveDialog)) {
+        if (warpDoorId == 2 && !(save_file_get_flags(SAVE_FLAG_UNLOCKED_BASEMENT_DOOR))) {
+            if (!(save_file_get_flags(SAVE_FLAG_HAVE_KEY_1))) {
+                if (display_door_dialog(m, (save_file_get_flags(SAVE_FLAG_HAVE_KEY_2)) ? gBehaviorValues.dialogs.KeyDoor2HaveDialog : gBehaviorValues.dialogs.KeyDoor2DontHaveDialog)) {
                     sDisplayingDoorText = TRUE;
                 }
                 return FALSE;
@@ -1234,7 +1240,7 @@ u32 interact_door(struct MarioState *m, UNUSED u32 interactType, struct Object *
                 enterDoorAction = ACT_ENTERING_STAR_DOOR;
             }
 
-            if (doorSaveFileFlag != 0 && !(save_file_get_flags() & doorSaveFileFlag)) {
+            if (doorSaveFileFlag != 0 && !(save_file_get_flags(doorSaveFileFlag))) {
                 enterDoorAction = ACT_UNLOCKING_STAR_DOOR;
             }
 
@@ -2048,7 +2054,12 @@ u32 check_object_grab_mario(struct MarioState *m, UNUSED u32 interactType, struc
 u32 interact_pole(struct MarioState *m, UNUSED u32 interactType, struct Object *o) {
     if (!m || !o) { return FALSE; }
     s32 actionId = m->action & ACT_ID_MASK;
-    if (actionId >= 0x080 && actionId < 0x0A0) {
+#ifdef ARCHIPELAGO
+    if (actionId >= 0x080 && actionId < 0x0A0 && SM64AP_CanClimb())
+#else
+    if (actionId >= 0x080 && actionId < 0x0A0)
+#endif
+    {
         if (!(m->prevAction & ACT_FLAG_ON_POLE) || m->usedObj != o) {
 #ifdef VERSION_SH
             f32 velConv = m->forwardVel; // conserve the velocity.

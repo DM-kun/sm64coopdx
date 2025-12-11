@@ -29111,17 +29111,19 @@ int smlua_func_save_file_clear_flags(lua_State* L) {
     return 1;
 }
 
-int smlua_func_save_file_get_flags(UNUSED lua_State* L) {
+int smlua_func_save_file_get_flags(lua_State* L) {
     if (L == NULL) { return 0; }
 
     int top = lua_gettop(L);
-    if (top != 0) {
-        LOG_LUA_LINE("Improper param count for '%s': Expected %u, Received %u", "save_file_get_flags", 0, top);
+    if (top != 1) {
+        LOG_LUA_LINE("Improper param count for '%s': Expected %u, Received %u", "save_file_get_flags", 1, top);
         return 0;
     }
 
+    u32 flags = smlua_to_integer(L, 1);
+    if (!gSmLuaConvertSuccess) { LOG_LUA("Failed to convert parameter %u for function '%s'", 1, "save_file_get_flags"); return 0; }
 
-    lua_pushinteger(L, save_file_get_flags());
+    lua_pushinteger(L, save_file_get_flags(flags));
 
     return 1;
 }

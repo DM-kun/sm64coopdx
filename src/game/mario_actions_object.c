@@ -15,6 +15,9 @@
 #include "pc/network/network.h"
 #include "object_helpers.h"
 #include "pc/lua/smlua.h"
+#ifdef ARCHIPELAGO
+#include "pc/archipelago/sm64ap.h"
+#endif
 
 /**
  * Used by act_punching() to determine Mario's forward velocity during each
@@ -110,7 +113,12 @@ s32 mario_update_punch_sequence(struct MarioState *m) {
                 m->flags |= MARIO_PUNCHING;
             }
 
-            if (m->input & INPUT_B_PRESSED) {
+#ifdef ARCHIPELAGO
+            if ((m->input & INPUT_B_PRESSED) && SM64AP_CanKick())
+#else
+            if (m->input & INPUT_B_PRESSED)
+#endif
+            {
                 m->actionArg = 6;
             }
 
@@ -155,6 +163,7 @@ s32 mario_update_punch_sequence(struct MarioState *m) {
 
 s32 act_punching(struct MarioState *m) {
     if (!m) { return 0; }
+
     if (m->input & INPUT_UNKNOWN_10) {
         return drop_and_set_mario_action(m, ACT_SHOCKWAVE_BOUNCE, 0);
     }
@@ -163,7 +172,12 @@ s32 act_punching(struct MarioState *m) {
         return check_common_action_exits(m);
     }
 
-    if (m->actionState == 0 && (m->input & INPUT_A_DOWN)) {
+#ifdef ARCHIPELAGO
+    if (m->actionState == 0 && (m->input & INPUT_A_DOWN) && SM64AP_CanKick())
+#else
+    if (m->actionState == 0 && (m->input & INPUT_A_DOWN))
+#endif
+    {
         return set_mario_action(m, ACT_JUMP_KICK, 0);
     }
 

@@ -10,6 +10,9 @@
 #include "mario_step.h"
 #include "pc/lua/smlua.h"
 #include "game/hardcoded.h"
+#ifdef ARCHIPELAGO
+#include "pc/archipelago/sm64ap.h"
+#endif
 
 static s16 sMovingSandSpeeds[] = { 12, 8, 4, 0 };
 
@@ -424,6 +427,12 @@ u32 check_ledge_grab(struct MarioState *m, struct Surface *wall, Vec3f intendedP
     f32 displacementX;
     f32 displacementZ;
 
+#ifdef ARCHIPELAGO
+    if (!SM64AP_CanLedgeGrab()) {
+        return FALSE;
+    }
+#endif
+
     if (m->vel[1] > 0) {
         return FALSE;
     }
@@ -540,8 +549,14 @@ s32 perform_air_quarter_step(struct MarioState *m, Vec3f intendedPos, u32 stepAr
             m->vel[1] = 0.0f;
 
             //! Uses referenced ceiling instead of ceil (ceiling hang upwarp)
+#ifdef ARCHIPELAGO
             if ((stepArg & AIR_STEP_CHECK_HANG) && m->ceil != NULL
-                && m->ceil->type == SURFACE_HANGABLE) {
+                && m->ceil->type == SURFACE_HANGABLE && SM64AP_CanClimb())
+#else
+            if ((stepArg & AIR_STEP_CHECK_HANG) && m->ceil != NULL
+                && m->ceil->type == SURFACE_HANGABLE)
+#endif
+            {
                 return AIR_STEP_GRABBED_CEILING;
             }
 

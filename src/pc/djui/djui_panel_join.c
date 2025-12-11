@@ -4,6 +4,7 @@
 #include "djui_panel_join_lobbies.h"
 #include "djui_panel_join_private.h"
 #include "djui_panel_join_direct.h"
+#include "djui_panel_join_archipelago.h"
 #include "pc/network/network.h"
 #include "pc/utils/misc.h"
 #include "pc/update_checker.h"
@@ -24,6 +25,7 @@ void djui_panel_join_create(struct DjuiBase* caller) {
         djui_button_create(body, DLANG(JOIN, PUBLIC_LOBBIES), DJUI_BUTTON_STYLE_NORMAL, djui_panel_join_public_lobbies);
         djui_button_create(body, DLANG(JOIN, PRIVATE_LOBBIES), DJUI_BUTTON_STYLE_NORMAL, djui_panel_join_private_create);
         djui_button_create(body, DLANG(JOIN, DIRECT), DJUI_BUTTON_STYLE_NORMAL, djui_panel_join_direct_create);
+        djui_button_create(body, DLANG(JOIN, ARCHIPELAGO), DJUI_BUTTON_STYLE_NORMAL, djui_panel_join_archipelago_create);
         djui_button_create(body, DLANG(MENU, BACK), DJUI_BUTTON_STYLE_BACK, djui_panel_menu_back);
     }
 

@@ -46,6 +46,8 @@ ENHANCE_LEVEL_TEXTURES ?= 1
 DISCORD_SDK ?= 1
 # Enable CoopNet SDK (used for CoopNet server hosting)
 COOPNET ?= 1
+# Enable Archipelago SDK (used for communication with Archipelago games)
+ARCHIPELAGO ?= 1
 # Enable docker build workarounds
 DOCKERBUILD ?= 0
 # Sets your optimization level for building.
@@ -322,6 +324,7 @@ ifeq ($(TARGET_RK3588),1)
   $(info Compiling for RK3588)
   DISCORD_SDK := 0
   COOPNET := 0
+  ARCHIPELAGO := 0
   machine = $(shell sh -c 'uname -m 2>/dev/null || echo unknown')
 
   # RK3588 in ARM64 (aarch64) mode
@@ -523,6 +526,10 @@ ifeq ($(DISCORD_SDK),1)
 endif
 
 SRC_DIRS += src/pc/mumble
+
+ifeq ($(ARCHIPELAGO),1)
+  SRC_DIRS += src/pc/archipelago
+endif
 
 ULTRA_SRC_DIRS := lib/src lib/src/math lib/asm lib/data
 ULTRA_BIN_DIRS := lib/bin
@@ -754,7 +761,7 @@ INCLUDE_DIRS := include $(BUILD_DIR) $(BUILD_DIR)/include src .
 ifeq ($(TARGET_N64),1)
   INCLUDE_DIRS += include/libc
 else
-  INCLUDE_DIRS += sound lib/lua/include lib/coopnet/include $(EXTRA_INCLUDES)
+  INCLUDE_DIRS += sound lib/lua/include lib/coopnet/include lib/APCpp $(EXTRA_INCLUDES)
 endif
 
 # Connfigure backend flags
@@ -1009,6 +1016,21 @@ else
   endif
 endif
 
+# Archipelago
+APCPP_LIBS :=
+ifeq ($(ARCHIPELAGO),1)
+  ifeq ($(WINDOWS_BUILD),1)
+    LDFLAGS += -Wl,-Bdynamic -L./lib/APCpp/build/ -llibAPCpp -Wl,-Bstatic
+    APCPP_LIBS := lib/APCpp/build/libAPCpp.dll
+  else ifeq ($(OSX_BUILD),1)
+    LDFLAGS += -Wl,-rpath,@loader_path -L./lib/APCpp/build/ -l libAPCpp
+    APCPP_LIBS := lib/APCpp/build/libAPCpp.dylib
+  else
+    LDFLAGS += -llibAPCpp -Wl,-rpath . -Wl,-rpath lib/APCpp/build
+    APCPP_LIBS := lib/APCpp/build/libAPCpp.so
+  endif
+endif
+
 IS_DEV_OR_DEBUG := $(or $(filter 1,$(DEVELOPMENT)),$(filter 1,$(DEBUG)),0)
 ifeq ($(IS_DEV_OR_DEBUG),0)
   CFLAGS += -fno-ident -fno-common -ffile-prefix-map="$(PWD)"=. -D__DATE__="\"\"" -D__TIME__="\"\"" -Wno-builtin-macro-redefined
@@ -1123,6 +1145,12 @@ ifeq ($(LEGACY_GL),1)
   CFLAGS += -DLEGACY_GL
 endif
 
+# Check for ARCHIPELAGO option
+ifeq ($(ARCHIPELAGO),1)
+  CC_CHECK_CFLAGS += -DARCHIPELAGO
+  CFLAGS += -DARCHIPELAGO
+endif
+
 #==============================================================================#
 # Miscellaneous Tools                                                          #
 #==============================================================================#
@@ -1193,6 +1221,7 @@ endif
 
 clean:
 	$(RM) -r $(BUILD_DIR_BASE)
+	$(RM) -r lib/APCpp/build
 
 cleantools:
 	$(MAKE) -s -C $(TOOLS_DIR) clean
@@ -1443,6 +1472,27 @@ $(GLOBAL_ASM_DEP).$(NON_MATCHING):
 # Compilation Recipes                                                          #
 #==============================================================================#
 
+# Compile APCpp Lib
+ifeq ($(ARCHIPELAGO),1)
+
+  APCPP_DIR := lib/APCpp
+  APCPP_BUILD_DIR := $(APCPP_DIR)/build
+  APCPP_CMAKE_FLAGS := \
+    $(CMAKE_WIN_BUILD_FLAG) \
+    -DMBEDTLS_FATAL_WARNINGS=OFF \
+    -DCMAKE_C_FLAGS="-fzero-init-padding-bits=unions"
+
+  $(APCPP_LIBS): $(APCPP_DIR)/Archipelago.cpp $(APCPP_DIR)/Archipelago.h
+    @mkdir -p $(APCPP_BUILD_DIR)
+    @cd $(APCPP_BUILD_DIR) && \
+    CXX=$(CXX) cmake .. $(APCPP_CMAKE_FLAGS) && \
+    CXX=$(CXX) cmake --build .
+
+  $(BUILD_DIR)/$(APCPP_LIBS):
+    @$(CP) -f $(APCPP_LIBS) $(BUILD_DIR)
+
+endif
+
 # Compile C++ code
 $(BUILD_DIR)/%.o: %.cpp
 	$(call print,Compiling:,$<,$@)
@@ -1565,7 +1615,7 @@ ifeq ($(TARGET_N64),1)
   $(BUILD_DIR)/$(TARGET).objdump: $(ELF)
 	$(OBJDUMP) -D $< > $@
 else
-  $(EXE): $(O_FILES) $(MIO0_FILES:.mio0=.o) $(ULTRA_O_FILES) $(GODDARD_O_FILES) $(BUILD_DIR)/$(RPC_LIBS) $(BUILD_DIR)/$(DISCORD_SDK_LIBS) $(BUILD_DIR)/$(COOPNET_LIBS) $(BUILD_DIR)/$(LANG_DIR) $(BUILD_DIR)/$(MOD_DIR) $(BUILD_DIR)/$(PALETTES_DIR)
+  $(EXE): $(O_FILES) $(MIO0_FILES:.mio0=.o) $(ULTRA_O_FILES) $(GODDARD_O_FILES) $(BUILD_DIR)/$(RPC_LIBS) $(BUILD_DIR)/$(DISCORD_SDK_LIBS) $(BUILD_DIR)/$(COOPNET_LIBS) $(BUILD_DIR)/$(APCPP_LIBS) $(BUILD_DIR)/$(LANG_DIR) $(BUILD_DIR)/$(MOD_DIR) $(BUILD_DIR)/$(PALETTES_DIR)
 	@$(PRINT) "$(GREEN)Linking executable: $(BLUE)$@ $(NO_COL)\n"
 	$(V)$(LD) $(PROF_FLAGS) -L $(BUILD_DIR) -o $@ $(O_FILES) $(ULTRA_O_FILES) $(GODDARD_O_FILES) $(LDFLAGS)
 endif
@@ -1605,6 +1655,7 @@ all:
     cp build/us_pc/libcoopnet.dylib $(APP_MACOS_DIR); \
     cp build/us_pc/libjuice.1.2.2.dylib $(APP_MACOS_DIR); \
     cp $(SDL2_LIB) $(APP_MACOS_DIR)/libSDL2.dylib; \
+    cp build/us_pc/libAPCpp.dylib $(APP_MACOS_DIR); \
     install_name_tool -change $(BREW_PREFIX)/opt/sdl2/lib/libSDL2-2.0.0.dylib @executable_path/libSDL2.dylib $(APP_MACOS_DIR)/sm64coopdx; > /dev/null 2>&1 \
 		install_name_tool -id @executable_path/libSDL2.dylib $(APP_MACOS_DIR)/libSDL2.dylib; > /dev/null 2>&1 \
     codesign --force --deep --sign - $(APP_MACOS_DIR)/libSDL2.dylib; \

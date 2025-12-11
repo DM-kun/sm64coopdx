@@ -37,6 +37,10 @@
 #include "pc/djui/djui.h"
 #include "first_person_cam.h"
 #include "rendering_graph_node.h"
+#include "menu/ingame_text.h"
+#ifdef ARCHIPELAGO
+#include "pc/archipelago/sm64ap.h"
+#endif
 
 #define CBUTTON_MASK (U_CBUTTONS | D_CBUTTONS | L_CBUTTONS | R_CBUTTONS)
 
@@ -5412,7 +5416,15 @@ u8 get_cutscene_from_mario_status(struct Camera *c) {
             cutscene = CUTSCENE_ENTER_CANNON;
         }
         if (SURFACE_IS_PAINTING_WARP(sMarioGeometry.currFloorType)) {
+#ifdef ARCHIPELAGO
+            struct WarpNode* warpNode = get_painting_warp_node();
+            if (SM64AP_HavePainting(gLevelToCourseNumTable[warpNode->destLevel - 1]))
+                cutscene = CUTSCENE_ENTER_PAINTING;
+            else
+                cutscene = 0;
+#else
             cutscene = CUTSCENE_ENTER_PAINTING;
+#endif
         }
         switch (sMarioCamState->action) {
             case ACT_DEATH_EXIT:

@@ -522,11 +522,21 @@ int main(int argc, char *argv[]) {
 
     // initialize network
     if (gCLIOpts.network == NT_CLIENT) {
+#ifdef ARCHIPELAGO
+        if (gAPOpts.archipelago) {
+            // TO-DO: handle starting the game with archipelago
+            extern void djui_panel_do_host(bool reconnecting, bool playSound);
+            djui_panel_do_host(NULL, false);
+        } else {
+#endif
         network_set_system(NS_SOCKET);
         snprintf(gGetHostName, MAX_CONFIG_STRING, "%s", gCLIOpts.joinIp);
         snprintf(configJoinIp, MAX_CONFIG_STRING, "%s", gCLIOpts.joinIp);
         configJoinPort = gCLIOpts.networkPort;
         network_init(NT_CLIENT, false);
+#ifdef ARCHIPELAGO
+        }
+#endif
     } else if (gCLIOpts.network == NT_SERVER || gCLIOpts.coopnet) {
         if (gCLIOpts.network == NT_SERVER) {
             configNetworkSystem = NS_SOCKET;

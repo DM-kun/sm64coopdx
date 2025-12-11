@@ -7898,10 +7898,12 @@ Clears specific flags in the current save file. The flags are specified as a bit
 Retrieves the bitmask of flags representing the current state of the save file. Flags indicate collected items, completed objectives, and other game states. Useful for checking specific game progress details
 
 ### Lua Example
-`local integerValue = save_file_get_flags()`
+`local integerValue = save_file_get_flags(u32 flags)`
 
 ### Parameters
-- None
+| Field | Type |
+| ----- | ---- |
+| flags | `integer` |
 
 ### Returns
 - `integer`

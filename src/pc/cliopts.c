@@ -3,6 +3,9 @@
 #include "pc_main.h"
 #include "platform.h"
 #include "macros.h"
+#ifdef ARCHIPELAGO
+#include "pc/archipelago/sm64ap.h"
+#endif
 
 #include <strings.h>
 #include <stdlib.h>
@@ -11,6 +14,9 @@
 #include <string.h>
 
 struct CLIOptions gCLIOpts;
+#ifdef ARCHIPELAGO
+struct APOptions gAPOpts;
+#endif
 
 static void print_help(void) {
     printf("sm64coopdx\n");
@@ -37,6 +43,17 @@ static void print_help(void) {
     printf("--headless                Enable Headless mode.");
 }
 
+#ifdef ARCHIPELAGO
+static void print_help_ap(void) {
+    printf("archipelago\n");
+    printf("--sm64ap_ip IP:PORT       Starts the game and connects to the Hosted Archipelago Room.\n");
+    printf("--sm64ap_port PORT        Starts the game and connects to the Archipelago Room.\n");
+    printf("--sm64ap_name NAME        Starts the game with the Archipelago Room name of the player.\n");
+    printf("--sm64ap_passwd PASSWORD  Starts the game with the Archipelago Room password.\n");
+    printf("--sm64ap_file PATH        Starts the game and Archipelago from a file in the given path.");
+}
+#endif
+
 static inline int arg_string(const char *name, const char *value, char *target, int maxLength) {
     const unsigned int arglen = strlen(value);
     if (arglen >= (unsigned int) maxLength) {
@@ -56,16 +73,18 @@ static inline int arg_uint(UNUSED const char *name, const char *value, unsigned 
 bool parse_cli_opts(int argc, char* argv[]) {
     // initialize options with false values
     memset(&gCLIOpts, 0, sizeof(gCLIOpts));
+#ifdef ARCHIPELAGO
+    memset(&gAPOpts, 0, sizeof(gAPOpts));
+#endif
     gCLIOpts.enableMods = NULL;
 
     for (int i = 1; i < argc; i++) {
 #if defined(_WIN32) || defined(_WIN64)
         if (!strcmp(argv[i], "--console")) {
             gCLIOpts.console = true;
-        } else if (!strcmp(argv[i], "--savepath") && (i + 1) < argc) {
-#else
-        if (!strcmp(argv[i], "--savepath") && (i + 1) < argc) {
+        } else
 #endif
+        if (!strcmp(argv[i], "--savepath") && (i + 1) < argc) {
             arg_string("--savepath", argv[++i], gCLIOpts.savePath, SYS_MAX_PATH);
         } else if (!strcmp(argv[i], "--configfile") && (i + 1) < argc) {
             arg_string("--configfile", argv[++i], gCLIOpts.configFile, SYS_MAX_PATH);
@@ -115,11 +134,51 @@ bool parse_cli_opts(int argc, char* argv[]) {
             gCLIOpts.enableMods[gCLIOpts.enabledModsCount - 1] = strdup(argv[++i]);
         } else if (!strcmp(argv[i], "--headless")) {
             gCLIOpts.headless = true;
+#ifdef ARCHIPELAGO
+        } else if (!strcmp(argv[i], "--sm64ap_ip") && (i + 1) < argc) {
+            arg_string("--sm64ap_ip <ap_ip>", argv[++i], gAPOpts.apIp, IP_MAX_LEN);
+        } else if (!strcmp(argv[i], "--sm64ap_port") && (i + 1) < argc) {
+            arg_string("--sm64ap_port <ap_port>", argv[++i], gAPOpts.apPort, PORT_MAX_LEN);
+        } else if (!strcmp(argv[i], "--sm64ap_name") && (i + 1) < argc) {
+            arg_string("--sm64ap_name <ap_name>", argv[++i], gAPOpts.apName, MAX_CONFIG_STRING);
+        } else if (!strcmp(argv[i], "--sm64ap_passwd") && (i + 1) < argc) {
+            arg_string("--sm64ap_passwd <ap_passwd>", argv[++i], gAPOpts.apPassword, MAX_CONFIG_STRING);
+        } else if (!strcmp(argv[i], "--sm64ap_file") && (i + 1) < argc) {
+            arg_string("--sm64ap_file <ap_file>", argv[++i], gAPOpts.apFile, SYS_MAX_PATH);
+#endif
         } else if (!strcmp(argv[i], "--help")) {
             print_help();
+#ifdef ARCHIPELAGO
+            printf("\n");
+            print_help_ap();
+#endif
             return false;
         }
     }
-
+#ifdef ARCHIPELAGO
+    if (strlen(gAPOpts.apName) == 0) {
+        if (strlen(gAPOpts.apFile) == 0) {
+            printf("SM64AP: Archipelago is disabled!\n");
+            printf("SM64AP: You need to at least specify a Name (For MultiWorld) or a Seed Filename (For Singleplayer).\n");
+        } else {
+            gAPOpts.archipelago = true;
+            gAPOpts.local = true;
+            SM64AP_Init_SP(gAPOpts.apFile);
+        }
+    } else {
+        char apFullIp[64] = "";
+        if (strlen(gAPOpts.apIp) == 0) {
+            if (strlen(gAPOpts.apPort) > 0) {
+                apFullIp = "archipelago.gg:";
+                strcat(apFullIp, gAPOpts.apPort);
+            }
+        } else {
+            strcpy(apFullIp, gAPOpts.apIp);
+        }
+        gAPOpts.archipelago = true;
+        gAPOpts.multiworld = true;
+        SM64AP_Init_MW(apFullIp, gAPOpts.apName, strlen(gAPOpts.apPassword) == 0 ? "" : gAPOpts.apPassword);
+    }
+#endif
     return true;
 }

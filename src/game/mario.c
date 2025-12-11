@@ -44,6 +44,9 @@
 #include "pc/network/socket/socket.h"
 #include "bettercamera.h"
 #include "first_person_cam.h"
+#ifdef ARCHIPELAGO
+#include "pc/archipelago/sm64ap.h"
+#endif
 
 #define MAX_HANG_PREVENTION 64
 
@@ -1140,6 +1143,20 @@ static u32 set_mario_action_cutscene(struct MarioState *m, u32 action, UNUSED u3
  */
 u32 set_mario_action(struct MarioState *m, u32 action, u32 actionArg) {
     if (!m) { return FALSE; }
+
+#ifdef ARCHIPELAGO
+    // Intercepting and replacing Mario's jumps if not yet unlocked.
+    if (   (action == ACT_DOUBLE_JUMP && !SM64AP_CanDoubleJump())
+        || (action == ACT_TRIPLE_JUMP && !SM64AP_CanTripleJump())
+        || (action == ACT_FLYING_TRIPLE_JUMP && !SM64AP_CanTripleJump())
+        || (action == ACT_BACKFLIP && !SM64AP_CanBackflip())
+        || (action == ACT_LONG_JUMP && !SM64AP_CanLongJump())
+        || (action == ACT_SIDE_FLIP && !SM64AP_CanSideFlip())
+    ) {
+        action = ACT_JUMP;
+    }
+#endif
+
     u32 returnValue = 0;
     smlua_call_event_hooks_mario_action_and_arg_ret_int(HOOK_BEFORE_SET_MARIO_ACTION, m, action, actionArg, &returnValue);
     if (returnValue == 1) { return TRUE; } else if (returnValue) { action = returnValue; }

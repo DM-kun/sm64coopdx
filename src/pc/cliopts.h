@@ -38,8 +38,21 @@ struct CLIOptions {
     char** enableMods;
     bool headless;
 };
-
 extern struct CLIOptions gCLIOpts;
+
+#ifdef ARCHIPELAGO
+struct APOptions {
+    bool archipelago;
+    bool local;
+    bool multiworld;
+    char apIp[IP_MAX_LEN];
+    char apPort[PORT_MAX_LEN];
+    char apName[MAX_CONFIG_STRING];
+    char apPassword[MAX_CONFIG_STRING];
+    char apFile[SYS_MAX_PATH];
+};
+extern struct CLIOptions gAPOpts;
+#endif
 
 bool parse_cli_opts(int argc, char* argv[]);
 

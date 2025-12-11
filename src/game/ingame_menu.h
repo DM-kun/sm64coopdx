@@ -181,6 +181,11 @@ void do_cutscene_handler(void);
 void render_hud_cannon_reticle(void);
 void reset_red_coins_collected(void);
 s16 render_menus_and_dialogs(void);
+#ifdef VERSION_EU
+void render_digit(struct DialogEntry *dialog, s8 *linePos, int i);
+#else
+void render_digit(s8 *xMatrix, s16 *linePos, int i);
+#endif
 void create_dl_scale_matrix(s8 pushOp, f32 x, f32 y, f32 z);
 /* |description|Dialog box customization: Sets the minimum width for a dialog box|descriptionEnd| */
 void set_min_dialog_width(s16 width);

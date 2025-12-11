@@ -1,4 +1,7 @@
 // exclamation_box.c.inc
+#ifdef ARCHIPELAGO
+#include "pc/archipelago/sm64ap.h"
+#endif
 
 struct ObjectHitbox sExclamationBoxHitbox = {
     .interactType = INTERACT_BREAKABLE,
@@ -18,11 +21,18 @@ void bhv_rotating_exclamation_box_loop(void) {
 }
 
 void exclamation_box_act_0(void) {
+#ifdef ARCHIPELAGO
+    if ((o->oBehParams >> 16) == 0x1404) {
+        o->oAnimState = 3;
+        o->oAction = 2;
+        return;
+    }
+#endif
+
     o->oExclamationBoxForce = FALSE;
     if (o->oBehParams2ndByte < 3) {
         o->oAnimState = o->oBehParams2ndByte;
-        if ((save_file_get_flags() & BHV_ARR(D_8032F0C0, o->oBehParams2ndByte, s32))
-            || ((o->oBehParams >> 24) & 0xFF) != 0)
+        if ((save_file_get_flags(BHV_ARR(D_8032F0C0, o->oBehParams2ndByte, s32))) || ((o->oBehParams >> 24) & 0xFF) != 0)
             o->oAction = 2;
         else
             o->oAction = 1;
@@ -38,8 +48,7 @@ void exclamation_box_act_1(void) {
         spawn_object(o, smlua_model_util_load(E_MODEL_EXCLAMATION_POINT), bhvRotatingExclamationMark);
         cur_obj_set_model(smlua_model_util_load(E_MODEL_EXCLAMATION_BOX_OUTLINE));
     }
-    if ((save_file_get_flags() & BHV_ARR(D_8032F0C0, o->oBehParams2ndByte, s32))
-        || ((o->oBehParams >> 24) & 0xFF) != 0) {
+    if ((save_file_get_flags(BHV_ARR(D_8032F0C0, o->oBehParams2ndByte, s32))) || ((o->oBehParams >> 24) & 0xFF) != 0) {
         o->oAction = 2;
         cur_obj_set_model(smlua_model_util_load(E_MODEL_EXCLAMATION_BOX));
     }
@@ -105,6 +114,13 @@ static s32 exclamation_replace_model(struct MarioState* m, s32 model) {
 }
 
 void exclamation_box_spawn_contents(struct ExclamationBoxContent *content, u8 itemId) {
+#ifdef ARCHIPELAGO
+    if ((o->oBehParams >> 16) == 0x1404) {
+        SM64AP_SendByBoxID(o->oBehParams & 0xFFFF);
+        return;
+    }
+#endif
+
     if (content == NULL) { return; }
     struct MarioState* marioState = nearest_mario_state_to_object(o);
     struct Object* player = marioState ? marioState->marioObj : NULL;

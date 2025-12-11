@@ -21,6 +21,9 @@
 #include "pc/network/network.h"
 #include "pc/lua/smlua.h"
 #include "hardcoded.h"
+#ifdef ARCHIPELAGO
+#include "pc/archipelago/sm64ap.h"
+#endif
 
 /* |description|
 Checks for and handles common conditions that would cancel Mario's current idle action.
@@ -545,7 +548,12 @@ s32 act_standing_against_wall(struct MarioState *m) {
         return set_mario_action(m, ACT_FIRST_PERSON, 0);
     }
 
-    if (m->input & INPUT_B_PRESSED) {
+#ifdef ARCHIPELAGO
+    if ((m->input & INPUT_B_PRESSED) && SM64AP_CanKick())
+#else
+    if (m->input & INPUT_B_PRESSED)
+#endif
+    {
         return set_mario_action(m, ACT_PUNCHING, 0);
     }
 

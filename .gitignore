@@ -91,3 +91,5 @@ todo-old.txt
 *.DS_Store
 tools/ido5.3_compiler/usr/lib/libc.so.1
 /.vs
+.cache/
+compile_commands.json

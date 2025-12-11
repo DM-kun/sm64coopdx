@@ -9489,9 +9489,10 @@ function save_file_clear_flags(flags)
     -- ...
 end
 
+--- @param flags integer
 --- @return integer
 --- Retrieves the bitmask of flags representing the current state of the save file. Flags indicate collected items, completed objectives, and other game states. Useful for checking specific game progress details
-function save_file_get_flags()
+function save_file_get_flags(flags)
     -- ...
 end
 

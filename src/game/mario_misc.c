@@ -169,24 +169,23 @@ static void toad_message_fading(void) {
 
 void bhv_toad_message_init(void) {
     if (!gCurrentObject) { return; }
-    s32 saveFlags = save_file_get_flags();
     s32 starCount = save_file_get_total_star_count(gCurrSaveFileNum - 1, COURSE_MIN - 1, COURSE_MAX - 1);
     s32 dialogId = (gCurrentObject->oBehParams >> 24) & 0xFF;
     s32 enoughStars = TRUE;
 
     if (dialogId == (s32)TOAD_STAR_1_DIALOG) {
         enoughStars = (starCount >= TOAD_STAR_1_REQUIREMENT);
-        if (saveFlags & SAVE_FLAG_COLLECTED_TOAD_STAR_1) {
+        if (save_file_get_flags(SAVE_FLAG_COLLECTED_TOAD_STAR_1)) {
             dialogId = TOAD_STAR_1_DIALOG_AFTER;
         }
     } else if (dialogId == (s32)TOAD_STAR_2_DIALOG) {
         enoughStars = (starCount >= TOAD_STAR_2_REQUIREMENT);
-        if (saveFlags & SAVE_FLAG_COLLECTED_TOAD_STAR_2) {
+        if (save_file_get_flags(SAVE_FLAG_COLLECTED_TOAD_STAR_2)) {
             dialogId = TOAD_STAR_2_DIALOG_AFTER;
         }
     } else if (dialogId == (s32)TOAD_STAR_3_DIALOG) {
         enoughStars = (starCount >= TOAD_STAR_3_REQUIREMENT);
-        if (saveFlags & SAVE_FLAG_COLLECTED_TOAD_STAR_3) {
+        if (save_file_get_flags(SAVE_FLAG_COLLECTED_TOAD_STAR_3)) {
             dialogId = TOAD_STAR_3_DIALOG_AFTER;
         }
     }

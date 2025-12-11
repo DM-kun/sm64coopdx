@@ -21,6 +21,9 @@ void djui_panel_do_host(bool reconnecting, bool playSound) {
     gCurrSaveFileNum = configHostSaveSlot;
     update_all_mario_stars();
 
+#ifndef ARCHIPELAGO
+    if (configNetworkSystem == NS_AP) { configNetworkSystem = NS_SOCKET; }
+#endif
 #ifndef COOPNET
     if (configNetworkSystem == NS_COOPNET) { configNetworkSystem = NS_SOCKET; }
 #endif

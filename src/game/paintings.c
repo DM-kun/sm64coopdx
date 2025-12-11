@@ -22,6 +22,9 @@
 #include "pc/network/network_player.h"
 #include "print.h"
 #include "hardcoded.h"
+#ifdef ARCHIPELAGO
+#include "pc/archipelago/sm64ap.h"
+#endif
 
 /**
  * @file paintings.c
@@ -1615,12 +1618,10 @@ void reset_painting(struct Painting *painting) {
 void move_ddd_painting(struct Painting *painting, f32 frontPos, f32 backPos, f32 speed) {
     // Obtain the DDD star flags
     u32 dddFlags = save_file_get_star_flags(gCurrSaveFileNum - 1, COURSE_DDD - 1);
-    // Get the other save file flags
-    u32 saveFileFlags = save_file_get_flags();
     // Find out whether Board Bowser's Sub was collected
     u32 bowsersSubBeaten = dddFlags & BOARD_BOWSERS_SUB;
     // Check whether DDD has already moved back
-    u32 dddBack = saveFileFlags & SAVE_FLAG_DDD_MOVED_BACK;
+    u32 dddBack = save_file_get_flags(SAVE_FLAG_DDD_MOVED_BACK);
 
     if (!bowsersSubBeaten && !dddBack) {
         // If we haven't collected the star or moved the painting, put the painting at the front
@@ -1660,12 +1661,35 @@ void set_painting_layer(struct GraphNodeGenerated *gen, struct Painting *paintin
  * Display either a normal painting or a rippling one depending on the painting's ripple status
  */
 Gfx *display_painting(struct Painting *painting) {
+#ifdef ARCHIPELAGO
+    int courseidx = 1;
+    switch (painting->id) {
+        case 0x0: courseidx = 1;  break; // BOB
+        case 0x2: courseidx = 2;  break; // WF
+        case 0x3: courseidx = 3;  break; // JRB
+        case 0x1: courseidx = 4;  break; // CCM
+            // BBH and HMC are skipped here (courses 5 + 6)
+        case 0x4: courseidx = 7;  break; // LLL
+        case 0x5: courseidx = 8;  break; // SSL
+        case 0x7: courseidx = 9;  break; // DDD
+        case 0xC: courseidx = 10; break; // SL
+        case 0x8: courseidx = 11; break; // WDW
+        case 0xA: courseidx = 12; break; // TTM
+        case 0xD: courseidx = 13; break; // THI Huge painting
+        case 0x9: courseidx = 13; break; // THI Tiny painting
+        case 0xB: courseidx = 14; break; // TTC
+    }
+#endif
     switch (painting->state) {
         case PAINTING_IDLE:
             return display_painting_not_rippling(painting);
             break;
         default:
+#ifdef ARCHIPELAGO
+            return SM64AP_HavePainting(courseidx) ? display_painting_rippling(painting) : display_painting_not_rippling(painting);
+#else
             return display_painting_rippling(painting);
+#endif
             break;
     }
 }

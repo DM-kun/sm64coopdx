@@ -1,6 +1,9 @@
 /**
  * Behavior for MIPS (everyone's favorite yellow rabbit).
  */
+#ifdef ARCHIPELAGO
+#include "pc/archipelago/sm64ap.h"
+#endif
 
 static Trajectory** sMipsPaths[] = {
     &gBehaviorValues.trajectories.MipsTrajectory,
@@ -36,16 +39,28 @@ void bhv_mips_init(void) {
     u8 starFlags = save_file_get_star_flags(gCurrSaveFileNum - 1, -1);
 
     // If the player has >= 15 stars and hasn't collected first MIPS star...
+#ifdef ARCHIPELAGO
+    if (save_file_get_total_star_count(gCurrSaveFileNum - 1, COURSE_MIN - 1, COURSE_MAX - 1) >= SM64AP_GetRequiredStars(gBehaviorValues.MipsStar1Requirement)
+        && !SM64AP_CheckedLoc(SM64AP_LOCATIONID_MIPS1))
+#else
     if (save_file_get_total_star_count(gCurrSaveFileNum - 1, COURSE_MIN - 1, COURSE_MAX - 1) >= gBehaviorValues.MipsStar1Requirement
-        && !(starFlags & SAVE_FLAG_TO_STAR_FLAG(SAVE_FLAG_COLLECTED_MIPS_STAR_1))) {
+        && !(starFlags & SAVE_FLAG_TO_STAR_FLAG(SAVE_FLAG_COLLECTED_MIPS_STAR_1)))
+#endif
+    {
         o->oBehParams2ndByte = 0;
 #ifndef VERSION_JP
         o->oMipsForwardVelocity = 40.0f;
 #endif
     }
     // If the player has >= 50 stars and hasn't collected second MIPS star...
+#ifdef ARCHIPELAGO
+    else if (save_file_get_total_star_count(gCurrSaveFileNum - 1, COURSE_MIN - 1, COURSE_MAX - 1) >= SM64AP_GetRequiredStars(gBehaviorValues.MipsStar2Requirement)
+             && SM64AP_CheckedLoc(SM64AP_LOCATIONID_MIPS1) && !SM64AP_CheckedLoc(SM64AP_LOCATIONID_MIPS2))
+#else
     else if (save_file_get_total_star_count(gCurrSaveFileNum - 1, COURSE_MIN - 1, COURSE_MAX - 1) >= gBehaviorValues.MipsStar2Requirement
-             && !(starFlags & SAVE_FLAG_TO_STAR_FLAG(SAVE_FLAG_COLLECTED_MIPS_STAR_2))) {
+             && !(starFlags & SAVE_FLAG_TO_STAR_FLAG(SAVE_FLAG_COLLECTED_MIPS_STAR_2)))
+#endif
+    {
         o->oBehParams2ndByte = 1;
 #ifndef VERSION_JP
         o->oMipsForwardVelocity = 45.0f;

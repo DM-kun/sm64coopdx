@@ -76,14 +76,12 @@ s16 round_float(f32 num) {
  * player where to look to enter Tower of the Wing Cap.
  */
 Gfx *geo_exec_inside_castle_light(s32 callContext, struct GraphNode *node, UNUSED f32 mtx[4][4]) {
-    s32 flags;
     struct GraphNodeGenerated *generatedNode;
     Gfx *displayListHead = NULL;
     Gfx *displayList = NULL;
 
     if (callContext == GEO_CONTEXT_RENDER) {
-        flags = save_file_get_flags();
-        if (gHudDisplay.stars >= gLevelValues.wingCapLookUpReq && !(flags & SAVE_FLAG_HAVE_WING_CAP)) {
+        if (gHudDisplay.stars >= gLevelValues.wingCapLookUpReq && !(save_file_get_flags(SAVE_FLAG_HAVE_WING_CAP))) {
             displayList = alloc_display_list(2 * sizeof(*displayList));
 
             if (displayList == NULL) {

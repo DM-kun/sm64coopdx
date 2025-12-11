@@ -377,7 +377,7 @@ void bobomb_buddy_cannon_dialog(s16 dialogFirstText, s16 dialogSecondText) {
 
         case BOBOMB_BUDDY_CANNON_STOP_TALKING:
             set_mario_npc_dialog(&gMarioStates[0], 0, NULL);
-
+            save_file_set_cannon_unlocked();
             o->activeFlags &= ~ACTIVE_FLAG_INITIATED_TIME_STOP;
             o->oBobombBuddyHasTalkedToMario = BOBOMB_BUDDY_HAS_TALKED;
             o->oInteractStatus = 0;

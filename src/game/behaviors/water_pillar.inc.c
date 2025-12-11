@@ -1,4 +1,7 @@
 // water_pillar.c.inc
+#ifdef ARCHIPELAGO
+#include "pc/archipelago/sm64ap.h"
+#endif
 
 void water_level_pillar_undrained(void) {
     struct Object *otherWaterPillar;
@@ -30,6 +33,9 @@ void water_level_pillar_undrained(void) {
                     o->oAction++;
 
                     save_file_set_flags(SAVE_FLAG_MOAT_DRAINED);
+#ifdef ARCHIPELAGO
+                    SM64AP_SetMoatDrained();
+#endif
                     play_puzzle_jingle();
                 }
             }
@@ -63,7 +69,7 @@ static u8 bhv_water_level_pillar_ignore_if_true(void) {
 }
 
 void bhv_water_level_pillar_init(void) {
-    if (save_file_get_flags() & SAVE_FLAG_MOAT_DRAINED)
+    if (save_file_get_flags(SAVE_FLAG_MOAT_DRAINED))
         o->oWaterLevelPillarDrained = 1;
 
     struct SyncObject* so = sync_object_init(o, SYNC_DISTANCE_ONLY_EVENTS);

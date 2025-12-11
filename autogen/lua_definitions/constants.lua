@@ -4331,11 +4331,13 @@ PACKET_LENGTH = 3000
 
 NS_SOCKET  = 0 --- @type NetworkSystemType
 NS_COOPNET = 1 --- @type NetworkSystemType
-NS_MAX     = 2 --- @type NetworkSystemType
+NS_AP      = 2 --- @type NetworkSystemType
+NS_MAX     = 3 --- @type NetworkSystemType
 
 --- @alias NetworkSystemType
 --- | `NS_SOCKET`
 --- | `NS_COOPNET`
+--- | `NS_AP`
 --- | `NS_MAX`
 
 PLAYER_INTERACTIONS_NONE  = 0 --- @type PlayerInteractions

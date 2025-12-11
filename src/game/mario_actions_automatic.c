@@ -24,6 +24,9 @@
 #include "pc/configfile.h"
 #include "pc/network/network.h"
 #include "pc/lua/smlua.h"
+#ifdef ARCHIPELAGO
+#include "pc/archipelago/sm64ap.h"
+#endif
 
 #define POLE_NONE          0
 #define POLE_TOUCHED_FLOOR 1
@@ -463,7 +466,12 @@ s32 act_start_hanging(struct MarioState *m) {
         return set_mario_action(m, ACT_FREEFALL, 0);
     }
 
-    if (m->input & INPUT_Z_PRESSED) {
+    #ifdef ARCHIPELAGO
+    if ((m->input & INPUT_Z_PRESSED) && SM64AP_CanGroundPound())
+    #else
+    if (m->input & INPUT_Z_PRESSED)
+    #endif
+    {
         return set_mario_action(m, ACT_GROUND_POUND, 0);
     }
 
@@ -492,7 +500,12 @@ s32 act_hanging(struct MarioState *m) {
         return set_mario_action(m, ACT_FREEFALL, 0);
     }
 
-    if (m->input & INPUT_Z_PRESSED) {
+    #ifdef ARCHIPELAGO
+    if ((m->input & INPUT_Z_PRESSED) && SM64AP_CanGroundPound())
+    #else
+    if (m->input & INPUT_Z_PRESSED)
+    #endif
+    {
         return set_mario_action(m, ACT_GROUND_POUND, 0);
     }
 
@@ -517,7 +530,12 @@ s32 act_hang_moving(struct MarioState *m) {
         return set_mario_action(m, ACT_FREEFALL, 0);
     }
 
-    if (m->input & INPUT_Z_PRESSED) {
+    #ifdef ARCHIPELAGO
+    if ((m->input & INPUT_Z_PRESSED) && SM64AP_CanGroundPound())
+    #else
+    if (m->input & INPUT_Z_PRESSED)
+    #endif
+    {
         return set_mario_action(m, ACT_GROUND_POUND, 0);
     }
 

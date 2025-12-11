@@ -17,6 +17,9 @@
 #include "pc/configfile.h"
 #include "pc/network/network.h"
 #include "pc/lua/smlua.h"
+#ifdef ARCHIPELAGO
+#include "pc/archipelago/sm64ap.h"
+#endif
 
 struct LandingAction {
     s16 numFrames;
@@ -133,7 +136,12 @@ void check_ledge_climb_down(struct MarioState *m) {
     s16 wallAngle;
     s16 wallDYaw;
 
-    if (m->forwardVel < 10.0f) {
+#ifdef ARCHIPELAGO
+    if (m->forwardVel < 10.0f && SM64AP_CanLedgeGrab())
+#else
+    if (m->forwardVel < 10.0f)
+#endif
+    {
         wallCols.x = m->pos[0];
         wallCols.y = m->pos[1];
         wallCols.z = m->pos[2];
@@ -583,11 +591,15 @@ s32 check_ground_dive_or_punch(struct MarioState *m) {
 
     if (m->input & INPUT_B_PRESSED) {
         //! Speed kick (shoutouts to SimpleFlips)
-        if (m->forwardVel >= 29.0f && m->controller->stickMag > 48.0f) {
+#ifdef ARCHIPELAGO
+        if (m->forwardVel >= 29.0f && m->controller->stickMag > 48.0f && SM64AP_CanDive())
+#else
+        if (m->forwardVel >= 29.0f && m->controller->stickMag > 48.0f)
+#endif
+        {
             m->vel[1] = 20.0f;
             return set_mario_action(m, ACT_DIVE, 1);
         }
-
         return set_mario_action(m, ACT_MOVE_PUNCHING, 0);
     }
 
@@ -981,7 +993,12 @@ s32 act_move_punching(struct MarioState *m) {
         return set_mario_action(m, ACT_BEGIN_SLIDING, 0);
     }
 
-    if (m->actionState == 0 && (m->input & INPUT_A_DOWN)) {
+#ifdef ARCHIPELAGO
+    if (m->actionState == 0 && (m->input & INPUT_A_DOWN) && SM64AP_CanKick())
+#else
+    if (m->actionState == 0 && (m->input & INPUT_A_DOWN))
+#endif
+    {
         return set_mario_action(m, ACT_JUMP_KICK, 0);
     }
 
@@ -1639,9 +1656,20 @@ s32 act_crouch_slide(struct MarioState *m) {
     }
 
     if (m->input & INPUT_B_PRESSED) {
-        if (m->forwardVel >= 10.0f) {
+#ifdef ARCHIPELAGO
+        if (m->forwardVel >= 10.0f && SM64AP_CanKick())
+#else
+        if (m->forwardVel >= 10.0f)
+#endif
+        {
             return set_mario_action(m, ACT_SLIDE_KICK, 0);
-        } else {
+        }
+#ifdef ARCHIPELAGO
+        else if (SM64AP_CanKick())
+#else
+        else
+#endif
+        {
             return set_mario_action(m, ACT_MOVE_PUNCHING, 0x0009);
         }
     }

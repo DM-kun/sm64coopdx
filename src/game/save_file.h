@@ -203,7 +203,7 @@ void save_file_clear_flags(u32 flags);
 Retrieves the bitmask of flags representing the current state of the save file. Flags indicate collected items, completed objectives, and other game states.
 Useful for checking specific game progress details
 |descriptionEnd| */
-u32 save_file_get_flags(void);
+u32 save_file_get_flags(u32 flags);
 
 /* |description|
 Retrieves the bitmask of stars collected in a specific course or castle secret stars (-1).

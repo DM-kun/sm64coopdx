@@ -38,6 +38,9 @@
 #include "level_info.h"
 #include "pc/lua/utils/smlua_text_utils.h"
 #include "menu/ingame_text.h"
+#ifdef ARCHIPELAGO
+#include "pc/archipelago/sm64ap.h"
+#endif
 
 u16 gDialogColorFadeTimer;
 s8 gLastDialogLineNum;
@@ -1398,56 +1401,54 @@ void render_star_count_dialog_text(struct DialogEntry *dialog, s8 *linePos)
 void render_star_count_dialog_text(s8 *xMatrix, s16 *linePos)
 #endif
 {
-    s8 tensDigit = gDialogVariable / 10;
-    s8 onesDigit = gDialogVariable - (tensDigit * 10); // remainder
+    s8 hundredsDigit = gDialogVariable / 100;
+    s8 tensDigit = gDialogVariable % 100 / 10;
+    s8 onesDigit = gDialogVariable % 10;
 
-    if (tensDigit != 0) {
-#if defined(VERSION_JP) || defined(VERSION_SH)
-        create_dl_translation_matrix(MENU_MTX_NOPUSH, xMatrix[0] * 10, 0, 0);
-        render_generic_char(tensDigit);
-#elif defined(VERSION_EU)
-        render_generic_dialog_char_at_pos(dialog, gDialogX, gDialogY, tensDigit);
-        gDialogX += gDialogCharWidths[tensDigit];
-        linePos[0] = 1;
+    if (hundredsDigit != 0) {
+#ifdef VERSION_EU
+        render_digit(dialog, linePos, hundredsDigit);
 #else
-        if (xMatrix[0] != 1) {
-            create_dl_translation_matrix(MENU_MTX_NOPUSH, (f32)(gDialogCharWidths[DIALOG_CHAR_SPACE] * xMatrix[0]), 0, 0);
-        }
+        render_digit(xMatrix, linePos, hundredsDigit);
+#endif
+    }
 
-        render_generic_char(tensDigit);
-        create_dl_translation_matrix(MENU_MTX_NOPUSH, (f32) gDialogCharWidths[tensDigit], 0, 0);
-        xMatrix[0] = 1;
-        linePos[0]++;
+    if (hundredsDigit != 0 || tensDigit != 0) {
+#ifdef VERSION_EU
+        render_digit(dialog, linePos, tensDigit);
+#else
+        render_digit(xMatrix, linePos, tensDigit);
 #endif
     }
-#ifndef VERSION_EU
-    else {
-#if defined(VERSION_JP) || defined(VERSION_SH)
-        xMatrix[0]++;
-#endif
-    }
-#endif
 
 #ifdef VERSION_EU
-    render_generic_dialog_char_at_pos(dialog, gDialogX, gDialogY, onesDigit);
-    gDialogX += gDialogCharWidths[onesDigit];
-    linePos[0] = 1;
+    render_digit(dialog, linePos, onesDigit);
 #else
+    render_digit(xMatrix, linePos, onesDigit);
+#endif
+}
 
+#ifdef VERSION_EU
+void render_digit(struct DialogEntry *dialog, s8 *linePos, int i)
+#else
+void render_digit(s8 *xMatrix, s16 *linePos, int i)
+#endif
+{
 #if defined(VERSION_JP) || defined(VERSION_SH)
     create_dl_translation_matrix(MENU_MTX_NOPUSH, xMatrix[0] * 10, 0, 0);
-    render_generic_char(onesDigit);
+    render_generic_char(i);
+#elif defined(VERSION_EU)
+    render_generic_dialog_char_at_pos(dialog, gDialogX, gDialogY, i);
+    gDialogX += gDialogCharWidths[i];
+    linePos[0] = 1;
 #else
     if (xMatrix[0] != 1) {
-        create_dl_translation_matrix(MENU_MTX_NOPUSH, (f32)(gDialogCharWidths[DIALOG_CHAR_SPACE] * (xMatrix[0] - 1)), 0, 0);
+        create_dl_translation_matrix(MENU_MTX_NOPUSH, (f32) (gDialogCharWidths[DIALOG_CHAR_SPACE] * xMatrix[0]), 0, 0);
     }
-
-    render_generic_char(onesDigit);
-    create_dl_translation_matrix(MENU_MTX_NOPUSH, (f32) gDialogCharWidths[onesDigit], 0, 0);
-#endif
-
-    linePos[0]++;
+    render_generic_char(i);
+    create_dl_translation_matrix(MENU_MTX_NOPUSH, (f32) gDialogCharWidths[i], 0, 0);
     xMatrix[0] = 1;
+    linePos[0]++;
 #endif
 }
 
@@ -2771,7 +2772,7 @@ void render_pause_castle_course_stars(s16 x, s16 y, s16 fileNum, s16 courseNum) 
 
     if (starFlags & 0x40) {
         starCount--;
-        print_generic_string(x + 89, y - 5, textStar);
+        print_generic_string(x + 30, y - 5, textStar);
     }
 
     while (hasStar != starCount) {
@@ -2845,12 +2846,25 @@ void render_pause_castle_main_strings(s16 x, s16 y) {
 
     if (gDialogLineNum < COURSE_STAGES_COUNT) {
         render_pause_castle_course_stars(x, y, gCurrSaveFileNum - 1, gDialogLineNum);
-        print_generic_string(x + 34, y - 5, textCoin);
+        print_generic_string(x - 9, y - 5, textCoin);
 #ifdef VERSION_EU
         print_generic_string(x + 44, y - 5, textX);
 #endif
         int_to_str(save_file_get_course_coin_score(gCurrSaveFileNum - 1, gDialogLineNum), strVal);
-        print_generic_string(x + 54, y - 5, strVal);
+        print_generic_string(x + 5, y - 5, strVal);
+
+#ifdef ARCHIPELAGO
+        // TO-DO: use save flag instead
+        if (SM64AP_HaveCannon(gDialogLineNum)) {
+#if defined(VERSION_JP) || defined(VERSION_SH)
+            const char *textCannon = "キャノン ロック解除";
+#else
+            const char *textCannon = "Cannon Unlocked";
+#endif
+            print_generic_string(x + 50, y - 5, (const u8 *)textCannon);
+        }
+#endif
+
 #ifdef VERSION_EU
         print_generic_string(x - 17, y + 30, courseName);
 #endif
@@ -2890,7 +2904,7 @@ static u32 pause_castle_get_stars(s32 index) {
 
     // Flags (26)
     if (index == INDEX_FLAGS) {
-        return save_file_get_flags();
+        return save_file_get_flags(INDEX_FLAGS);
     }
 
     return 0;
@@ -2912,7 +2926,7 @@ static void render_pause_castle_flag_icon(const u8 *texture, s16 texW, s16 texH,
 }
 
 static void render_pause_castle_flag(s16 x, s16 y, u32 flag) {
-    if (save_file_get_flags() & flag) {
+    if (save_file_get_flags(flag)) {
         gDPSetEnvColor(gDisplayListHead++, 255, 255, 255, gDialogTextAlpha);
     } else {
         gDPSetEnvColor(gDisplayListHead++, 0, 0, 0, gDialogTextAlpha / 3);

@@ -1,3 +1,4 @@
+#include <stdio.h>
 #include <ultra64.h>
 #include "sm64.h"
 #include "game_init.h"
@@ -15,6 +16,9 @@
 #include "pc/network/network.h"
 #include "pc/lua/utils/smlua_level_utils.h"
 #include "pc/utils/misc.h"
+#ifdef ARCHIPELAGO
+#include "pc/archipelago/sm64ap.h"
+#endif
 
 #ifndef bcopy
 #define bcopy(b1,b2,len) (memmove((b2), (b1), (len)), (void) 0)
@@ -538,7 +542,6 @@ void save_file_collect_star_or_key(s16 coinScore, s16 starIndex, u8 fromNetwork)
 
     s32 starByte = (starIndex / 7) - 1;
     s32 starFlag = 1 << (gLevelValues.useGlobalStarIds ? (starIndex % 7) : starIndex);
-    UNUSED s32 flags = save_file_get_flags();
 
     if (!fromNetwork) {
         gLastCompletedCourseNum = courseIndex + 1;
@@ -567,24 +570,36 @@ void save_file_collect_star_or_key(s16 coinScore, s16 starIndex, u8 fromNetwork)
     s32 index = gLevelValues.useGlobalStarIds ? starByte : courseIndex;
     switch (gCurrLevelNum) {
         case LEVEL_BOWSER_1:
-            if (!(save_file_get_flags() & (SAVE_FLAG_HAVE_KEY_1 | SAVE_FLAG_UNLOCKED_BASEMENT_DOOR))) {
+            if (!(save_file_get_flags(SAVE_FLAG_HAVE_KEY_1) || save_file_get_flags(SAVE_FLAG_UNLOCKED_BASEMENT_DOOR))) {
                 save_file_set_flags(SAVE_FLAG_HAVE_KEY_1);
             }
+#ifdef ARCHIPELAGO
+            SM64AP_FinishBowser(0);
+#endif
             break;
 
         case LEVEL_BOWSER_2:
-            if (!(save_file_get_flags() & (SAVE_FLAG_HAVE_KEY_2 | SAVE_FLAG_UNLOCKED_UPSTAIRS_DOOR))) {
+            if (!(save_file_get_flags(SAVE_FLAG_HAVE_KEY_2) || save_file_get_flags(SAVE_FLAG_UNLOCKED_UPSTAIRS_DOOR))) {
                 save_file_set_flags(SAVE_FLAG_HAVE_KEY_2);
             }
+#ifdef ARCHIPELAGO
+            SM64AP_FinishBowser(1);
+#endif
             break;
 
         case LEVEL_BOWSER_3:
+#ifdef ARCHIPELAGO
+            SM64AP_FinishBowser(2);
+#endif
             break;
 
         default:
             if (!(save_file_get_star_flags(fileIndex, index) & starFlag)) {
                 save_file_set_star_flags(fileIndex, index, starFlag);
             }
+#ifdef ARCHIPELAGO
+            SM64AP_SendItem((courseIndex == -1 ? (10+15-1)*7 : courseIndex*7) + starFlag);
+#endif
             break;
     }
 }
@@ -636,6 +651,10 @@ s32 save_file_get_course_star_count(s32 fileIndex, s32 courseIndex) {
 }
 
 s32 save_file_get_total_star_count(s32 fileIndex, s32 minCourse, s32 maxCourse) {
+#ifdef ARCHIPELAGO
+    return SM64AP_GetStars();
+#endif
+
     if (INVALID_FILE_INDEX(fileIndex)) { return 02; }
     s32 count = 0;
 
@@ -658,6 +677,22 @@ void save_file_set_flags(u32 flags) {
     flags &= ~(SAVE_FLAG_CAP_ON_GROUND | SAVE_FLAG_CAP_ON_KLEPTO | SAVE_FLAG_CAP_ON_MR_BLIZZARD | SAVE_FLAG_CAP_ON_UKIKI);
     if (flags == 0) { return; }
 
+#ifdef ARCHIPELAGO
+    // TO-DO: senditem, sendloc, that stuff
+    SM64AP_SendItem(flags);
+    switch (flags) {
+        case SAVE_FLAG_HAVE_WING_CAP:
+            SM64AP_SendItem(SM64AP_ID_WINGCAP);
+            break;
+        case SAVE_FLAG_HAVE_METAL_CAP:
+            SM64AP_SendItem(SM64AP_ID_METALCAP);
+            break;
+        case SAVE_FLAG_HAVE_VANISH_CAP:
+            SM64AP_SendItem(SM64AP_ID_VANISHCAP);
+            break;
+    }
+#endif
+
     gSaveBuffer.files[gCurrSaveFileNum - 1][gSaveFileUsingBackupSlot].flags |= (flags | SAVE_FLAG_FILE_EXISTS);
     gSaveFileModified = TRUE;
     network_send_save_set_flag(gCurrSaveFileNum - 1, 0, 0, (flags | SAVE_FLAG_FILE_EXISTS));
@@ -671,13 +706,17 @@ void save_file_clear_flags(u32 flags) {
     gSaveFileModified = TRUE;
 }
 
-u32 save_file_get_flags(void) {
+u32 save_file_get_flags(u32 flags) {
     if (INVALID_FILE_INDEX(gCurrSaveFileNum - 1)) { return 0; }
     if (INVALID_SRC_SLOT(gSaveFileUsingBackupSlot)) { return 0; }
     if (gCurrCreditsEntry != NULL || gCurrDemoInput != NULL) {
         return 0;
     }
-    return gSaveBuffer.files[gCurrSaveFileNum - 1][gSaveFileUsingBackupSlot].flags;
+#ifdef ARCHIPELAGO
+    return SM64AP_CheckedLoc(flags);
+#else
+    return gSaveBuffer.files[gCurrSaveFileNum - 1][gSaveFileUsingBackupSlot].flags & flags;
+#endif
 }
 
 /**
@@ -685,6 +724,10 @@ u32 save_file_get_flags(void) {
  * If course is -1, return the bitset of obtained castle secret stars.
  */
 u32 save_file_get_star_flags(s32 fileIndex, s32 courseIndex) {
+#ifdef ARCHIPELAGO
+    return SM64AP_CourseStarFlags(courseIndex);
+#endif
+
     if (INVALID_FILE_INDEX(fileIndex)) { return 0; }
     if (INVALID_SRC_SLOT(gSaveFileUsingBackupSlot)) { return 0; }
     u32 starFlags = 0;
@@ -761,6 +804,10 @@ void save_file_set_course_coin_score(s32 fileIndex, s32 courseIndex, u8 coinScor
  * Return TRUE if the cannon is unlocked in the current course.
  */
 s32 save_file_is_cannon_unlocked(s32 fileIndex, s32 courseIndex) {
+#ifdef ARCHIPELAGO
+    return SM64AP_HaveCannon(gCurrCourseNum-1);
+#endif
+
     if (INVALID_FILE_INDEX(fileIndex)) { return 0; }
     if (INVALID_SRC_SLOT(gSaveFileUsingBackupSlot)) { return 0; }
     if (INVALID_COURSE_STAR_INDEX(courseIndex)) { return 0; }
@@ -771,6 +818,10 @@ s32 save_file_is_cannon_unlocked(s32 fileIndex, s32 courseIndex) {
  * Sets the cannon status to unlocked in the current course.
  */
 void save_file_set_cannon_unlocked(void) {
+#ifdef ARCHIPELAGO
+    if (gCurrCourseNum <= 15) SM64AP_SendItem(200 + gCurrCourseNum - 1 + SM64AP_ID_OFFSET);
+#endif
+
     if (INVALID_FILE_INDEX(gCurrSaveFileNum - 1)) { return; }
     if (INVALID_SRC_SLOT(gSaveFileUsingBackupSlot)) { return; }
     if (INVALID_COURSE_STAR_INDEX(gCurrCourseNum)) { return; }
@@ -795,10 +846,9 @@ s32 save_file_get_cap_pos(Vec3s capPos) {
     if (INVALID_FILE_INDEX(gCurrSaveFileNum - 1)) { return 0; }
     if (INVALID_SRC_SLOT(gSaveFileUsingBackupSlot)) { return 0; }
     struct SaveFile *saveFile = &gSaveBuffer.files[gCurrSaveFileNum - 1][gSaveFileUsingBackupSlot];
-    s32 flags = save_file_get_flags();
 
     if (saveFile->capLevel == gCurrLevelNum && saveFile->capArea == gCurrAreaIndex
-        && (flags & SAVE_FLAG_CAP_ON_GROUND)) {
+        && (save_file_get_flags(SAVE_FLAG_CAP_ON_GROUND))) {
         vec3s_copy(capPos, saveFile->capPos);
         return TRUE;
     }
@@ -820,7 +870,7 @@ u16 save_file_get_sound_mode(void) {
 void save_file_move_cap_to_default_location(void) {
     if (INVALID_FILE_INDEX(gCurrSaveFileNum - 1)) { return; }
     if (INVALID_SRC_SLOT(gSaveFileUsingBackupSlot)) { return; }
-    if (save_file_get_flags() & SAVE_FLAG_CAP_ON_GROUND || gMarioStates[0].cap == SAVE_FLAG_CAP_ON_GROUND) {
+    if (save_file_get_flags(SAVE_FLAG_CAP_ON_GROUND) || gMarioStates[0].cap == SAVE_FLAG_CAP_ON_GROUND) {
         switch (gSaveBuffer.files[gCurrSaveFileNum - 1][gSaveFileUsingBackupSlot].capLevel) {
             case LEVEL_SSL:
                 gMarioStates[0].cap = SAVE_FLAG_CAP_ON_KLEPTO;
