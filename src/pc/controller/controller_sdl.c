@@ -354,7 +354,7 @@ static void controller_sdl_rumble_play(f32 strength, f32 length) {
     if (sdl_haptic) {
         SDL_PlayHapticRumble(sdl_haptic, strength, (u32)(length * 1000.0f));
     } else {
-        if (SDL_GetGamepadProperties(sdl_cntrl) & SDL_PROP_GAMEPAD_CAP_RUMBLE_BOOLEAN) {
+        if (SDL_GetBooleanProperty(SDL_GetGamepadProperties(sdl_cntrl), SDL_PROP_GAMEPAD_CAP_RUMBLE_BOOLEAN, false)) {
             uint16_t scaled_strength = strength * pow(2, 16) - 1;
             SDL_RumbleGamepad(sdl_cntrl, scaled_strength, scaled_strength, (u32)(length * 1000.0f));
         }
@@ -365,7 +365,7 @@ static void controller_sdl_rumble_stop(void) {
     if (sdl_haptic) {
         SDL_StopHapticRumble(sdl_haptic);
     } else {
-        if (SDL_GetGamepadProperties(sdl_cntrl) & SDL_PROP_GAMEPAD_CAP_RUMBLE_BOOLEAN) {
+        if (SDL_GetBooleanProperty(SDL_GetGamepadProperties(sdl_cntrl), SDL_PROP_GAMEPAD_CAP_RUMBLE_BOOLEAN, false)) {
             SDL_RumbleGamepad(sdl_cntrl, 0, 0, 0);
         }
     }

@@ -65,7 +65,7 @@ static void (*kb_text_editing)(char*, int) = NULL;
 
 static void (*m_scroll)(float, float) = NULL;
 
-#define IS_FULLSCREEN() ((SDL_GetWindowFlags(wnd) & SDL_WINDOW_FULLSCREEN_DESKTOP) != 0)
+#define IS_FULLSCREEN() ((SDL_GetWindowFlags(wnd) & (SDL_WINDOW_FULLSCREEN | 0x00001000)) != 0)
 
 static inline void gfx_sdl_set_vsync(const bool enabled) {
     SDL_GL_SetSwapInterval(enabled);
@@ -253,10 +253,10 @@ static void gfx_sdl_handle_events(void) {
     while (SDL_PollEvent(&event)) {
         switch (event.type) {
             case SDL_EVENT_TEXT_INPUT:
-                kb_text_input(event.text.text);
+                kb_text_input((char *)event.text.text);
                 break;
             case SDL_EVENT_TEXT_EDITING: //IME composition
-                kb_text_editing(event.edit.text, event.edit.start);
+                kb_text_editing((char *)event.edit.text, event.edit.start);
                 break;
             case SDL_EVENT_KEY_DOWN:
                 gfx_sdl_onkeydown(event.key.scancode);
@@ -280,7 +280,7 @@ static void gfx_sdl_handle_events(void) {
                 }
                 break;
             case SDL_EVENT_DROP_FILE:
-                gfx_sdl_ondropfile(event.drop.data);
+                gfx_sdl_ondropfile((char *)event.drop.data);
                 break;
             case SDL_EVENT_QUIT:
                 game_exit();

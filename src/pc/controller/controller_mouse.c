@@ -91,11 +91,11 @@ void controller_mouse_read_window(void) {
             }
         }
     } else {
-        mouse_window_buttons = SDL_GetMouseState(&mouse_window_x, &mouse_window_y);
+        mouse_window_buttons = SDL_GetMouseState((float *)mouse_window_x, (float *)mouse_window_y);
         mouse_window_x -= gfx_current_dimensions.x_adjust_4by3;
     }
 #else
-    mouse_window_buttons = SDL_GetMouseState(&mouse_window_x, &mouse_window_y);
+    mouse_window_buttons = SDL_GetMouseState((float *)mouse_window_x, (float *)mouse_window_y);
     mouse_window_x -= gfx_current_dimensions.x_adjust_4by3;
 #endif
 }
@@ -129,10 +129,10 @@ void controller_mouse_read_relative(void) {
             mouse_y = 0;
         }
     } else {
-        mouse_buttons = SDL_GetRelativeMouseState(&mouse_x, &mouse_y);
+        mouse_buttons = SDL_GetRelativeMouseState((float *)mouse_x, (float *)mouse_y);
     }
 #else
-    mouse_buttons = SDL_GetRelativeMouseState(&mouse_x, &mouse_y);
+    mouse_buttons = SDL_GetRelativeMouseState((float *)mouse_x, (float *)mouse_y);
 #endif
 
     if (mouse_scroll_y > 0) {

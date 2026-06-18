@@ -46,7 +46,7 @@ void djui_panel_controls_create(struct DjuiBase *caller) {
 
         int numJoys = 0;
         SDL_JoystickID *gamepads = SDL_GetGamepads(NULL);
-        if (gamepads != NULL) { numJoys = sizeof(gamepads) }
+        if (gamepads != NULL) { numJoys = sizeof(gamepads); }
         if (numJoys == 0) { numJoys = 1; }
 
         char **gamepadChoices = calloc(numJoys, sizeof(char *));

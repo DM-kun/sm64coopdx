@@ -204,7 +204,7 @@ static u32 get_display_refresh_rate(void) {
         if (display != 0) {
             const SDL_DisplayMode *mode = SDL_GetCurrentDisplayMode(display);
             if (mode != NULL) {
-                refreshRate = (u32) mode.refresh_rate;
+                refreshRate = (u32) mode->refresh_rate;
             }
         }
     }
