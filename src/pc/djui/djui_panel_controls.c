@@ -8,13 +8,13 @@
 #include "pc/controller/controller_api.h"
 #include "pc/controller/controller_sdl.h"
 
-void djui_panel_controls_value_change(UNUSED struct DjuiBase* caller) {
+void djui_panel_controls_value_change(UNUSED struct DjuiBase *caller) {
     controller_reconfigure();
 }
 
-void djui_panel_controls_analog_stick_options_create(struct DjuiBase* caller) {
-    struct DjuiThreePanel* panel = djui_panel_menu_create(DLANG(CONTROLS, CONTROLS), false);
-    struct DjuiBase* body = djui_three_panel_get_body(panel);
+void djui_panel_controls_analog_stick_options_create(struct DjuiBase *caller) {
+    struct DjuiThreePanel *panel = djui_panel_menu_create(DLANG(CONTROLS, CONTROLS), false);
+    struct DjuiBase *body = djui_three_panel_get_body(panel);
     {
         djui_checkbox_create(body, DLANG(CONTROLS, ROTATE_LEFT), &configStick.rotateLeft, NULL);
         djui_checkbox_create(body, DLANG(CONTROLS, INVERT_LEFT_X), &configStick.invertLeftX, NULL);
@@ -29,9 +29,9 @@ void djui_panel_controls_analog_stick_options_create(struct DjuiBase* caller) {
     djui_panel_add(caller, panel, NULL);
 }
 
-void djui_panel_controls_create(struct DjuiBase* caller) {
-    struct DjuiThreePanel* panel = djui_panel_menu_create(DLANG(CONTROLS, CONTROLS), false);
-    struct DjuiBase* body = djui_three_panel_get_body(panel);
+void djui_panel_controls_create(struct DjuiBase *caller) {
+    struct DjuiThreePanel *panel = djui_panel_menu_create(DLANG(CONTROLS, CONTROLS), false);
+    struct DjuiBase *body = djui_three_panel_get_body(panel);
     {
         djui_button_create(body, DLANG(CONTROLS, N64_BINDS), DJUI_BUTTON_STYLE_NORMAL, djui_panel_controls_n64_create);
         djui_button_create(body, DLANG(CONTROLS, EXTRA_BINDS), DJUI_BUTTON_STYLE_NORMAL, djui_panel_controls_extra_create);
@@ -44,19 +44,26 @@ void djui_panel_controls_create(struct DjuiBase* caller) {
 
         djui_checkbox_create(body, DLANG(CONTROLS, EXTENDED_REPORTS), &configExtendedReports, NULL);
 
-        int numJoys = SDL_NumJoysticks();
+        int numJoys = 0;
+        SDL_JoystickID *gamepads = SDL_GetGamepads(NULL);
+        if (gamepads != NULL) { numJoys = sizeof(gamepads) }
         if (numJoys == 0) { numJoys = 1; }
 
-        char** gamepadChoices = calloc(numJoys, sizeof(char *));
+        char **gamepadChoices = calloc(numJoys, sizeof(char *));
 
         // Get the names of all connected gamepads, if none is provided, use "Unknown"
         for (int i = 0; i < numJoys; i++) {
-            const char* joystickName = SDL_JoystickNameForIndex(i);
+            const char *joystickName = NULL;
+            if (gamepads != NULL) {
+                joystickName = SDL_GetJoystickNameForID(gamepads[i]);
+            }
             if (joystickName == NULL) {
                 joystickName = "Unknown";
             }
             gamepadChoices[i] = strdup(joystickName);
         }
+
+        SDL_free(gamepads);
 
         // Check for repeated names and append a number if necessary
         for (int i = 0; i < numJoys; i++) {

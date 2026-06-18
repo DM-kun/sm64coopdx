@@ -1,35 +1,48 @@
 #include <stdio.h>
-
-#include <SDL2/SDL.h>
+#include <SDL3/SDL.h>
 
 #include "audio_api.h"
 
-static SDL_AudioDeviceID dev;
+static SDL_AudioDeviceID dev = 0;
+static SDL_AudioStream *stream = NULL;
 
 static bool audio_sdl_init(void) {
-    if (SDL_Init(SDL_INIT_AUDIO) != 0) {
-        fprintf(stderr, "SDL init error: %s\n", SDL_GetError());
+    if (!SDL_InitSubSystem(SDL_INIT_AUDIO)) {
+        fprintf(stderr, "SDL_InitSubSystem error: %s\n", SDL_GetError());
         return false;
     }
 
-    SDL_AudioSpec want, have;
-    SDL_zero(want);
-    want.freq = 32000;
-    want.format = AUDIO_S16SYS;
-    want.channels = 2;
-    want.samples = 512;
-    want.callback = NULL;
-    dev = SDL_OpenAudioDevice(NULL, 0, &want, &have, 0);
+    const SDL_AudioSpec spec = { SDL_AUDIO_S16, 2, 32000 };
+
+    dev = SDL_OpenAudioDevice(SDL_AUDIO_DEVICE_DEFAULT_PLAYBACK, &spec);
     if (dev == 0) {
-        fprintf(stderr, "SDL_OpenAudio error: %s\n", SDL_GetError());
+        fprintf(stderr, "SDL_OpenAudioDevice error: %s\n", SDL_GetError());
+        SDL_QuitSubSystem(SDL_INIT_AUDIO);
         return false;
     }
-    SDL_PauseAudioDevice(dev, 0);
+
+    stream = SDL_CreateAudioStream(&spec, &spec);
+    if (stream == NULL) {
+        fprintf(stderr, "SDL_CreateAudioStream error: %s\n", SDL_GetError());
+        SDL_CloseAudioDevice(dev);
+        SDL_QuitSubSystem(SDL_INIT_AUDIO);
+        return false;
+    }
+
+    if (!SDL_BindAudioStream(dev, stream)) {
+        fprintf(stderr, "SDL_BindAudioStream error: %s\n", SDL_GetError());
+        SDL_DestroyAudioStream(stream);
+        SDL_CloseAudioDevice(dev);
+        SDL_QuitSubSystem(SDL_INIT_AUDIO);
+        return false;
+    }
+
+    SDL_ResumeAudioDevice(dev);
     return true;
 }
 
 static int audio_sdl_buffered(void) {
-    return SDL_GetQueuedAudioSize(dev) / 4;
+    return SDL_GetAudioStreamQueued(stream) / 4;
 }
 
 static int audio_sdl_get_desired_buffered(void) {
@@ -37,15 +50,18 @@ static int audio_sdl_get_desired_buffered(void) {
 }
 
 static void audio_sdl_play(const uint8_t *buf, size_t len) {
-    if (audio_sdl_buffered() < 6000) {
-        // Don't fill the audio buffer too much in case this happens
-        SDL_QueueAudio(dev, buf, len);
-    }
+    SDL_PutAudioStreamData(stream, buf, len);
 }
 
-static void audio_sdl_shutdown(void)
-{
+static void audio_sdl_shutdown(void) {
     if (SDL_WasInit(SDL_INIT_AUDIO)) {
+        if (dev != 0) { // Make sure Device is paused first
+            SDL_PauseAudioDevice(dev);
+        }
+        if (stream != NULL) { // Then clear any leftovers
+            SDL_ClearAudioStream(stream);
+            SDL_DestroyAudioStream(stream);
+        }
         if (dev != 0) {
             SDL_CloseAudioDevice(dev);
             dev = 0;

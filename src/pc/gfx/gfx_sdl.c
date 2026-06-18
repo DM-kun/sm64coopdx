@@ -4,7 +4,7 @@
 #define FOR_WINDOWS 0
 #endif
 
-#include <SDL2/SDL.h>
+#include <SDL3/SDL.h>
 
 #if defined(_WIN32)
 #include <windows.h>
@@ -15,14 +15,14 @@
 #include <GL/glew.h>
 
 #define GL_GLEXT_PROTOTYPES 1
-#include <SDL2/SDL_opengl.h>
+#include <SDL3/SDL_opengl.h>
 #else
 #define GL_GLEXT_PROTOTYPES 1
 
 #ifdef OSX_BUILD
-#include <SDL2/SDL_opengl.h>
+#include <SDL3/SDL_opengl.h>
 #else
-#include <SDL2/SDL_opengles2.h>
+#include <SDL3/SDL_opengles2.h>
 #endif
 
 #endif // End of OS-Specific GL defines
@@ -72,15 +72,17 @@ static inline void gfx_sdl_set_vsync(const bool enabled) {
 }
 
 static void gfx_sdl_set_fullscreen(void) {
-    if (configWindow.reset)
+    if (configWindow.reset) {
         configWindow.fullscreen = false;
-    if (configWindow.fullscreen == IS_FULLSCREEN())
+    }
+    if (configWindow.fullscreen == IS_FULLSCREEN()) {
         return;
+    }
     if (configWindow.fullscreen) {
-        SDL_SetWindowFullscreen(wnd, SDL_WINDOW_FULLSCREEN_DESKTOP);
+        SDL_SetWindowFullscreen(wnd, true);
     } else {
-        SDL_SetWindowFullscreen(wnd, 0);
-        SDL_ShowCursor(1);
+        SDL_SetWindowFullscreen(wnd, false);
+        SDL_ShowCursor();
         configWindow.exiting_fullscreen = true;
     }
 }
@@ -88,7 +90,7 @@ static void gfx_sdl_set_fullscreen(void) {
 static void gfx_sdl_reset_dimension_and_pos(void) {
     if (configWindow.exiting_fullscreen) {
         configWindow.exiting_fullscreen = false;
-        SDL_ShowCursor(0);
+        SDL_HideCursor();
     }
 
     if (configWindow.reset) {
@@ -117,7 +119,7 @@ static void gfx_sdl_init(const char *window_title) {
 
     SDL_SetHint(SDL_HINT_VIDEO_X11_NET_WM_BYPASS_COMPOSITOR, "0");
     SDL_Init(SDL_INIT_VIDEO);
-    SDL_StartTextInput();
+    SDL_StartTextInput(wnd);
 
     if (configWindow.msaa > 0) {
         SDL_GL_SetAttribute(SDL_GL_MULTISAMPLEBUFFERS, 1);
@@ -138,18 +140,23 @@ static void gfx_sdl_init(const char *window_title) {
     int xpos = (configWindow.x == WAPI_WIN_CENTERPOS) ? SDL_WINDOWPOS_CENTERED : configWindow.x;
     int ypos = (configWindow.y == WAPI_WIN_CENTERPOS) ? SDL_WINDOWPOS_CENTERED : configWindow.y;
 
-    wnd = SDL_CreateWindow(
-        window_title,
-        xpos, ypos, configWindow.w, configWindow.h,
-        SDL_WINDOW_OPENGL | SDL_WINDOW_SHOWN | SDL_WINDOW_RESIZABLE
-    );
+    SDL_PropertiesID props = SDL_CreateProperties();
+    SDL_SetStringProperty(props, SDL_PROP_WINDOW_CREATE_TITLE_STRING, window_title);
+    SDL_SetNumberProperty(props, SDL_PROP_WINDOW_CREATE_X_NUMBER, xpos);
+    SDL_SetNumberProperty(props, SDL_PROP_WINDOW_CREATE_Y_NUMBER, ypos);
+    SDL_SetNumberProperty(props, SDL_PROP_WINDOW_CREATE_WIDTH_NUMBER, configWindow.w);
+    SDL_SetNumberProperty(props, SDL_PROP_WINDOW_CREATE_HEIGHT_NUMBER, configWindow.h);
+    SDL_SetNumberProperty(props, SDL_PROP_WINDOW_CREATE_FLAGS_NUMBER, SDL_WINDOW_OPENGL | SDL_WINDOW_RESIZABLE);
+    wnd = SDL_CreateWindowWithProperties(props);
+    SDL_DestroyProperties(props);
+
     ctx = SDL_GL_CreateContext(wnd);
 
     gfx_sdl_set_vsync(configWindow.vsync);
 
     gfx_sdl_set_fullscreen();
     if (configWindow.fullscreen) {
-        SDL_ShowCursor(SDL_DISABLE);
+        SDL_HideCursor();
     }
 
     controller_bind_init();
@@ -157,17 +164,13 @@ static void gfx_sdl_init(const char *window_title) {
 
 bool gfx_sdl_check_opengl_compatibility(void) {
     if (!(SDL_WasInit(SDL_INIT_VIDEO) & SDL_INIT_VIDEO)) {
-        if (SDL_InitSubSystem(SDL_INIT_VIDEO) != 0) {
+        if (!SDL_InitSubSystem(SDL_INIT_VIDEO)) {
             return false;
         }
     }
 
     // hidden window
-    SDL_Window* window = SDL_CreateWindow(
-        "",
-        SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED, 1, 1,
-        SDL_WINDOW_OPENGL | SDL_WINDOW_HIDDEN
-    );
+    SDL_Window *window = SDL_CreateWindow("", 1, 1, SDL_WINDOW_OPENGL | SDL_WINDOW_HIDDEN);
 
     if (!window) {
         return false;
@@ -183,7 +186,7 @@ bool gfx_sdl_check_opengl_compatibility(void) {
     SDL_GL_MakeCurrent(window, ctx);
     bool validVersion = gfx_opengl_check_compatibility();
 
-    SDL_GL_DeleteContext(ctx);
+    SDL_GL_DestroyContext(ctx);
     SDL_DestroyWindow(window);
 
     return validVersion;
@@ -201,7 +204,7 @@ static void gfx_sdl_get_dimensions(uint32_t *width, uint32_t *height) {
 }
 
 static void gfx_sdl_onkeydown(int scancode) {
-    const Uint8 *state = SDL_GetKeyboardState(NULL);
+    const bool *state = SDL_GetKeyboardState(NULL);
 
     if ((state[SDL_SCANCODE_LALT] || state[SDL_SCANCODE_RALT]) && state[SDL_SCANCODE_RETURN]) {
         configWindow.fullscreen = !configWindow.fullscreen;
@@ -209,18 +212,21 @@ static void gfx_sdl_onkeydown(int scancode) {
         return;
     }
 
-    if (kb_key_down)
+    if (kb_key_down) {
         kb_key_down(translate_sdl_scancode(scancode));
+    }
 }
 
 static void gfx_sdl_onkeyup(int scancode) {
-    if (kb_key_up)
+    if (kb_key_up) {
         kb_key_up(translate_sdl_scancode(scancode));
+    }
 }
 
 static void gfx_sdl_onscroll(float x, float y) {
-    if (m_scroll)
+    if (m_scroll) {
         m_scroll(x, y);
+    }
 }
 
 static void gfx_sdl_ondropfile(char* path) {
@@ -246,41 +252,37 @@ static void gfx_sdl_handle_events(void) {
     SDL_Event event;
     while (SDL_PollEvent(&event)) {
         switch (event.type) {
-            case SDL_TEXTINPUT:
+            case SDL_EVENT_TEXT_INPUT:
                 kb_text_input(event.text.text);
                 break;
-            case SDL_TEXTEDITING: //IME composition
-                kb_text_editing(event.edit.text,event.edit.start);
+            case SDL_EVENT_TEXT_EDITING: //IME composition
+                kb_text_editing(event.edit.text, event.edit.start);
                 break;
-            case SDL_KEYDOWN:
-                gfx_sdl_onkeydown(event.key.keysym.scancode);
+            case SDL_EVENT_KEY_DOWN:
+                gfx_sdl_onkeydown(event.key.scancode);
                 break;
-            case SDL_KEYUP:
-                gfx_sdl_onkeyup(event.key.keysym.scancode);
+            case SDL_EVENT_KEY_UP:
+                gfx_sdl_onkeyup(event.key.scancode);
                 break;
-            case SDL_MOUSEWHEEL:
-                gfx_sdl_onscroll(event.wheel.preciseX, event.wheel.preciseY);
+            case SDL_EVENT_MOUSE_WHEEL:
+                gfx_sdl_onscroll(event.wheel.x, event.wheel.y);
                 break;
-            case SDL_WINDOWEVENT:
-                if (!IS_FULLSCREEN()) {
-                    switch (event.window.event) {
-                        case SDL_WINDOWEVENT_MOVED:
-                            if (!configWindow.exiting_fullscreen) {
-                                if (event.window.data1 >= 0) configWindow.x = event.window.data1;
-                                if (event.window.data2 >= 0) configWindow.y = event.window.data2;
-                            }
-                            break;
-                        case SDL_WINDOWEVENT_SIZE_CHANGED:
-                            configWindow.w = event.window.data1;
-                            configWindow.h = event.window.data2;
-                            break;
-                    }
+            case SDL_EVENT_WINDOW_MOVED:
+                if (!IS_FULLSCREEN() && !configWindow.exiting_fullscreen) {
+                    if (event.window.data1 >= 0) { configWindow.x = event.window.data1; }
+                    if (event.window.data2 >= 0) { configWindow.y = event.window.data2; }
                 }
                 break;
-            case SDL_DROPFILE:
-                gfx_sdl_ondropfile(event.drop.file);
+            case SDL_EVENT_WINDOW_RESIZED:
+                if (!IS_FULLSCREEN()) {
+                    configWindow.w = event.window.data1;
+                    configWindow.h = event.window.data2;
+                }
                 break;
-            case SDL_QUIT:
+            case SDL_EVENT_DROP_FILE:
+                gfx_sdl_ondropfile(event.drop.data);
+                break;
+            case SDL_EVENT_QUIT:
                 game_exit();
                 break;
         }
@@ -341,9 +343,13 @@ static void gfx_sdl_reset_window_title(void) {
     SDL_SetWindowTitle(wnd, TITLE);
 }
 
+SDL_Window *gfx_sdl_get_window(void) {
+    return wnd;
+}
+
 static void gfx_sdl_shutdown(void) {
     if (SDL_WasInit(0)) {
-        if (ctx) { SDL_GL_DeleteContext(ctx); ctx = NULL; }
+        if (ctx) { SDL_GL_DestroyContext(ctx); ctx = NULL; }
         if (wnd) { SDL_DestroyWindow(wnd); wnd = NULL; }
         SDL_Quit();
     }
@@ -353,8 +359,8 @@ static bool gfx_sdl_has_focus(void) {
     return (SDL_GetWindowFlags(wnd) & SDL_WINDOW_INPUT_FOCUS);
 }
 
-static void gfx_sdl_start_text_input(void) { SDL_StartTextInput(); }
-static void gfx_sdl_stop_text_input(void) { SDL_StopTextInput(); }
+static void gfx_sdl_start_text_input(void) { SDL_StartTextInput(wnd); }
+static void gfx_sdl_stop_text_input(void) { SDL_StopTextInput(wnd); }
 
 static char* gfx_sdl_get_clipboard_text(void) {
     static char clipboard_buf[WAPI_CLIPBOARD_BUFSIZ];
@@ -368,7 +374,7 @@ static char* gfx_sdl_get_clipboard_text(void) {
 }
 
 static void gfx_sdl_set_clipboard_text(const char* text) { SDL_SetClipboardText(text); }
-static void gfx_sdl_set_cursor_visible(bool visible) { SDL_ShowCursor(visible ? SDL_ENABLE : SDL_DISABLE); }
+static void gfx_sdl_set_cursor_visible(bool visible) { visible ? SDL_ShowCursor() : SDL_HideCursor(); }
 
 struct GfxWindowManagerAPI gfx_sdl = {
     gfx_sdl_init,

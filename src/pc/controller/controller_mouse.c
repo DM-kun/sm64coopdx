@@ -3,7 +3,8 @@
 #include "pc/djui/djui.h"
 #include "pc/pc_main.h"
 
-#include <SDL2/SDL.h>
+#include <SDL3/SDL.h>
+extern SDL_Window *gfx_sdl_get_window(void);
 
 #if defined(_WIN32)
 #define WIN32_LEAN_AND_MEAN
@@ -157,10 +158,10 @@ void controller_mouse_enter_relative(void) {
 
             ShowCursor(FALSE);
         } else {
-            SDL_SetRelativeMouseMode(SDL_TRUE);
+            SDL_SetWindowRelativeMouseMode(gfx_sdl_get_window(), true);
         }
 #else
-        SDL_SetRelativeMouseMode(SDL_TRUE);
+        SDL_SetWindowRelativeMouseMode(gfx_sdl_get_window(), true);
 #endif
     }
 }
@@ -173,10 +174,10 @@ void controller_mouse_leave_relative(void) {
         if (gWindowApi == &gfx_dxgi) {
             ShowCursor(mouse_relative_prev_cursor_state);
         } else {
-            SDL_SetRelativeMouseMode(SDL_FALSE);
+            SDL_SetWindowRelativeMouseMode(gfx_sdl_get_window(), false);
         }
 #else
-        SDL_SetRelativeMouseMode(SDL_FALSE);
+        SDL_SetWindowRelativeMouseMode(gfx_sdl_get_window(), false);
 #endif
     }
 }

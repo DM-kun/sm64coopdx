@@ -294,7 +294,7 @@ static void sys_fatal_impl(const char *msg) {
 
 #else
 
-#include <SDL2/SDL.h>
+#include <SDL3/SDL.h>
 
 const char *sys_user_path(void) {
     static char path[SYS_MAX_PATH] = { 0 };
@@ -303,8 +303,7 @@ const char *sys_user_path(void) {
     char const *subdirs[] = { "sm64coopdx", "sm64ex-coop", "sm64coopdx", NULL };
 
     char *sdlPath = NULL;
-    for (int i = 0; NULL != subdirs[i]; i++)
-    {
+    for (int i = 0; NULL != subdirs[i]; i++) {
         if (sdlPath) {
             // Previous dir likely just created with SDL_GetPrefPath.
             fs_sys_rmdir(sdlPath);
@@ -329,8 +328,7 @@ const char *sys_user_path(void) {
     return path;
 }
 
-const char *sys_resource_path(void)
-{
+const char *sys_resource_path(void) {
 #ifdef __APPLE__ // Kinda lazy, but I don't know how to add CoreFoundation.framework
     static char path[SYS_MAX_PATH];
     if ('\0' != path[0]) { return path; }
@@ -369,13 +367,12 @@ const char *sys_exe_path_file(void) {
 #if defined(__APPLE__)
     uint32_t bufsize = SYS_MAX_PATH;
     int res = _NSGetExecutablePath(path, &bufsize);
-
 #else
     char procPath[SYS_MAX_PATH];
     snprintf(procPath, SYS_MAX_PATH, "/proc/%d/exe", getpid());
     ssize_t res = readlink(procPath, path, SYS_MAX_PATH);
-
 #endif
+
     if (res <= 0) {
         LOG_ERROR("unable to retrieve absolute path.");
     }
