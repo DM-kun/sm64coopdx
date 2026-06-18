@@ -52,7 +52,7 @@ static u32 last_joybutton = VK_INVALID;
 static u32 last_gamepad = 0;
 
 static s16 invert_s16(s16 val) {
-    if (val == -0x8000) return 0x7FFF;
+    if (val == -0x8000) { return 0x7FFF; }
     return (s16)(-(s32)val);
 }
 
@@ -151,8 +151,10 @@ static void controller_sdl_init(void) {
 static SDL_Haptic *controller_sdl_init_haptics(const int joy) {
     if (!haptics_enabled) return NULL;
 
-    SDL_Haptic *hap = SDL_OpenHaptic(joy);
-    if (!hap) return NULL;
+    SDL_JoystickID *joysticks = SDL_GetJoysticks(NULL);
+    SDL_Haptic *hap = SDL_OpenHaptic(joysticks[joy]);
+    SDL_free(joysticks);
+    if (!hap) { return NULL; }
 
     if (!SDL_HapticRumbleSupported(hap)) {
         SDL_CloseHaptic(hap);
@@ -232,7 +234,7 @@ static void controller_sdl_read(OSContPad *pad) {
 
     if (configExtendedReports != sExtendedReports) {
         sExtendedReports = configExtendedReports;
-        char* hint = sExtendedReports ? "1" : "0";
+        char *hint = sExtendedReports ? "1" : "0";
         SDL_SetHint(SDL_HINT_JOYSTICK_ENHANCED_REPORTS, hint);
     }
 
@@ -257,15 +259,19 @@ static void controller_sdl_read(OSContPad *pad) {
         if (sdl_cntrl) { SDL_CloseGamepad(sdl_cntrl); sdl_cntrl = NULL; }
         if (sdl_joystick) { SDL_CloseJoystick(sdl_joystick); sdl_joystick = NULL; }
         last_gamepad = configGamepadNumber;
-        if (SDL_IsGamepad(configGamepadNumber)) {
-            sdl_cntrl = SDL_OpenGamepad(configGamepadNumber);
+
+        SDL_JoystickID *joysticks = SDL_GetJoysticks(NULL);
+        if (SDL_IsGamepad(joysticks[configGamepadNumber])) {
+            sdl_cntrl = SDL_OpenGamepad(joysticks[configGamepadNumber]);
             if (sdl_cntrl != NULL) {
                 sdl_haptic = controller_sdl_init_haptics(configGamepadNumber);
             }
         } else {
-            sdl_joystick = SDL_OpenJoystick(configGamepadNumber);
+            sdl_joystick = SDL_OpenJoystick(joysticks[configGamepadNumber]);
+            SDL_free(joysticks);
             if (!sdl_joystick) { return; }
         }
+        SDL_free(joysticks);
     }
 
     int16_t leftx = 0, lefty = 0, rightx = 0, righty = 0;
@@ -341,10 +347,10 @@ static void controller_sdl_read(OSContPad *pad) {
         pad->stick_y = 127;
     }
 
-    if (rightx < -0x4000) pad->button |= L_CBUTTONS;
-    if (rightx > 0x4000) pad->button |= R_CBUTTONS;
-    if (righty < -0x4000) pad->button |= U_CBUTTONS;
-    if (righty > 0x4000) pad->button |= D_CBUTTONS;
+    if (rightx < -0x4000) { pad->button |= L_CBUTTONS; }
+    if (rightx > 0x4000) { pad->button |= R_CBUTTONS; }
+    if (righty < -0x4000) { pad->button |= U_CBUTTONS; }
+    if (righty > 0x4000) { pad->button |= D_CBUTTONS; }
 
     update_analog_stick(&pad->stick_x, &pad->stick_y, leftx, lefty);
     update_analog_stick(&pad->ext_stick_x, &pad->ext_stick_y, rightx, righty);
