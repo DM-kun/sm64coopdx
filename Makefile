@@ -713,7 +713,9 @@ endif
 
 # Configure backend flags
 
-BACKEND_LDFLAGS :=
+BACKEND_CFLAGS += -DHAVE_SDL3=1
+BACKEND_CFLAGS += $(shell pkg-config sdl3 --cflags)
+BACKEND_LDFLAGS := $(shell pkg-config sdl3 --libs)
 
 # D3D11 flags
 ifeq ($(WINDOWS_BUILD),1)
@@ -736,9 +738,6 @@ else
   BACKEND_LDFLAGS += -lGL
 endif
 
-BACKEND_CFLAGS += -DHAVE_SDL3=1
-BACKEND_CFLAGS += $(shell pkg-config sdl3 --cflags)
-BACKEND_LDFLAGS += $(shell pkg-config sdl3 --libs)
 
 C_DEFINES += $(foreach d,$(DEFINES),-D$(d))
 DEF_INC_CFLAGS := $(foreach i,$(INCLUDE_DIRS),-I$(i)) $(C_DEFINES)

@@ -229,7 +229,7 @@ static void gfx_sdl_onscroll(float x, float y) {
     }
 }
 
-static void gfx_sdl_ondropfile(char* path) {
+static void gfx_sdl_ondropfile(char *path) {
 #ifdef _WIN32
     char portable_path[SYS_MAX_PATH];
     if (sys_windows_short_path_from_mbs(portable_path, SYS_MAX_PATH, path)) {
@@ -335,7 +335,7 @@ static int gfx_sdl_get_max_msaa(void) {
     return maxSamples;
 }
 
-static void gfx_sdl_set_window_title(const char* title) {
+static void gfx_sdl_set_window_title(const char *title) {
     SDL_SetWindowTitle(wnd, title);
 }
 
@@ -362,10 +362,10 @@ static bool gfx_sdl_has_focus(void) {
 static void gfx_sdl_start_text_input(void) { SDL_StartTextInput(wnd); }
 static void gfx_sdl_stop_text_input(void) { SDL_StopTextInput(wnd); }
 
-static char* gfx_sdl_get_clipboard_text(void) {
+static char *gfx_sdl_get_clipboard_text(void) {
     static char clipboard_buf[WAPI_CLIPBOARD_BUFSIZ];
 
-    char* text = SDL_GetClipboardText();
+    char *text = SDL_GetClipboardText();
     strncpy(clipboard_buf, text, WAPI_CLIPBOARD_BUFSIZ - 1);
     SDL_free(text);
 
@@ -373,7 +373,7 @@ static char* gfx_sdl_get_clipboard_text(void) {
     return clipboard_buf;
 }
 
-static void gfx_sdl_set_clipboard_text(const char* text) { SDL_SetClipboardText(text); }
+static void gfx_sdl_set_clipboard_text(const char *text) { SDL_SetClipboardText(text); }
 static void gfx_sdl_set_cursor_visible(bool visible) { visible ? SDL_ShowCursor() : SDL_HideCursor(); }
 
 struct GfxWindowManagerAPI gfx_sdl = {
