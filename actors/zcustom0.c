@@ -8,7 +8,7 @@
 #include "luigi/model.inc.c"
 
 // toad model
-#include "toad_player/model.inc.c"
+// #include "toad_player/model.inc.c"
 
 // waluigi_cap
 #include "waluigi_cap/model.inc.c"

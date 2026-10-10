@@ -1016,10 +1016,10 @@ s64 DynOS_Common_ParseModelConstants(const String &_Arg, bool *found) {
     common_constant(MODEL_LUIGIS_METAL_CAP);
     common_constant(MODEL_LUIGIS_WING_CAP);
     common_constant(MODEL_LUIGIS_WINGED_METAL_CAP);
-    common_constant(MODEL_TOAD_PLAYER);
-    common_constant(MODEL_TOADS_CAP);
-    common_constant(MODEL_TOADS_METAL_CAP);
-    common_constant(MODEL_TOADS_WING_CAP);
+    // common_constant(MODEL_TOAD_PLAYER);
+    // common_constant(MODEL_TOADS_CAP);
+    // common_constant(MODEL_TOADS_METAL_CAP);
+    // common_constant(MODEL_TOADS_WING_CAP);
     common_constant(MODEL_WALUIGI);
     common_constant(MODEL_WALUIGIS_CAP);
     common_constant(MODEL_WALUIGIS_METAL_CAP);

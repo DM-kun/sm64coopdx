@@ -17,8 +17,8 @@ extern Gfx mario_cap_seg3_dl_03022F48[];
 extern Gfx mario_cap_m_logo_decal[];
 extern Gfx luigi_cap_seg3_dl_03022F48[];
 extern Gfx luigi_cap_l_logo_decal[];
-extern Gfx toad_cap_mesh_layer_1[];
-extern Gfx toad_cap_mesh_layer_5[];
+// extern Gfx toad_cap_mesh_layer_1[];
+// extern Gfx toad_cap_mesh_layer_5[];
 extern Gfx waluigi_cap_seg3_dl_03022F48[];
 extern Gfx waluigi_cap_r_logo_decal[];
 extern Gfx wario_cap_seg3_dl_03022F48[];
@@ -163,7 +163,7 @@ struct Character gCharacters[CT_MAX] = {
         .soundOkeyDokey        = SOUND_LUIGI_OKEY_DOKEY,
     },
 
-    [CT_TOAD] = {
+    /*[CT_TOAD] = {
         .type                  = CT_TOAD,
         .name                  = "Toad",
         .hudHead               = '|',
@@ -227,7 +227,7 @@ struct Character gCharacters[CT_MAX] = {
         .soundImaTired         = SOUND_TOAD_IMA_TIRED,
         .soundLetsAGo          = SOUND_TOAD_LETS_A_GO,
         .soundOkeyDokey        = SOUND_TOAD_OKEY_DOKEY,
-    },
+    },*/
 
     [CT_WALUIGI] = {
         .type                  = CT_WALUIGI,

@@ -86,8 +86,8 @@ CUSTOM_DIRS := luigi_cap
 ZCUSTOM_DIRS := luigi
 
 # Add Toad
-CUSTOM_DIRS += toad_cap
-ZCUSTOM_DIRS += toad_player
+# CUSTOM_DIRS += toad_cap
+# ZCUSTOM_DIRS += toad_player
 
 # Add Waluigi
 CUSTOM_DIRS += waluigi_cap

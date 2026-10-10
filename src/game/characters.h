@@ -9,7 +9,7 @@
 enum CharacterType {
     CT_MARIO,
     CT_LUIGI,
-    CT_TOAD,
+    // CT_TOAD,
     CT_WALUIGI,
     CT_WARIO,
 

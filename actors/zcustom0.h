@@ -7,7 +7,7 @@
 #include "actors/luigi/geo_header.h"
 
 // toad_player
-#include "actors/toad_player/geo_header.h"
+// #include "actors/toad_player/geo_header.h"
 
 // waluigi_cap
 extern const GeoLayout waluigis_cap_geo[];
