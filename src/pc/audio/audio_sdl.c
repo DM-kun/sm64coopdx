@@ -2,9 +2,12 @@
 #include <SDL3/SDL.h>
 
 #include "audio_api.h"
+#include "audio/external.h"
+#include "pc/configfile.h"
 
 static SDL_AudioDeviceID sDevice = 0;
 static SDL_AudioStream *sStream = NULL;
+static int sAudioChannels = 2;
 
 static bool audio_sdl_init(void) {
     if (!SDL_InitSubSystem(SDL_INIT_AUDIO)) {
@@ -12,7 +15,8 @@ static bool audio_sdl_init(void) {
         return false;
     }
 
-    const SDL_AudioSpec spec = { SDL_AUDIO_S16, 2, 32000 };
+    sAudioChannels = configSoundOutput == SOUND_MODE_SURROUND ? 6 : 2;
+    const SDL_AudioSpec spec = { SDL_AUDIO_S16, sAudioChannels, 32000 };
 
     sDevice = SDL_OpenAudioDevice(SDL_AUDIO_DEVICE_DEFAULT_PLAYBACK, &spec);
     if (sDevice == 0) {
@@ -42,7 +46,7 @@ static bool audio_sdl_init(void) {
 }
 
 static int audio_sdl_buffered(void) {
-    return SDL_GetAudioStreamQueued(sStream) / 4;
+    return SDL_GetAudioStreamQueued(sStream) / (sAudioChannels * sizeof(int16_t));
 }
 
 static int audio_sdl_get_desired_buffered(void) {
@@ -70,10 +74,16 @@ static void audio_sdl_shutdown(void) {
     }
 }
 
+static bool audio_sdl_reload(void) {
+    audio_sdl_shutdown();
+    return audio_sdl_init();
+}
+
 struct AudioAPI audio_sdl = {
     audio_sdl_init,
     audio_sdl_buffered,
     audio_sdl_get_desired_buffered,
     audio_sdl_play,
-    audio_sdl_shutdown
+    audio_sdl_shutdown,
+    audio_sdl_reload
 };

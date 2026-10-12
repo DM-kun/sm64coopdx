@@ -16,6 +16,10 @@
 #define SOUND_MODE_STEREO           0
 #define SOUND_MODE_MONO             1
 #define SOUND_MODE_HEADSET          2
+#define SOUND_MODE_SURROUND         3
+
+#define SOUND_MODE_MIN SOUND_MODE_STEREO
+#define SOUND_MODE_MAX SOUND_MODE_SURROUND + 1
 
 #define SEQ_PLAYER_LEVEL            0  // Level background music
 #define SEQ_PLAYER_ENV              1  // Misc music like the puzzle jingle

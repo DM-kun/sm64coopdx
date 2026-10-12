@@ -32,7 +32,7 @@ static u16 sCurrentMusic = MUSIC_NONE;
 static u16 sCurrentShellMusic = MUSIC_NONE;
 static u16 sCurrentCapMusic = MUSIC_NONE;
 static u8 sPlayingInfiniteStairs = FALSE;
-static s16 sSoundMenuModeToSoundMode[] = { SOUND_MODE_STEREO, SOUND_MODE_MONO, SOUND_MODE_HEADSET };
+static s16 sSoundMenuModeToSoundMode[] = { SOUND_MODE_STEREO, SOUND_MODE_MONO, SOUND_MODE_HEADSET, SOUND_MODE_SURROUND };
 // Only the 20th array element is used.
 static u32 sMenuSoundsExtra[] = {
     SOUND_MOVING_TERRAIN_SLIDE + (0 << 16),
@@ -157,7 +157,7 @@ void enable_background_sound(void) {
 void set_sound_mode(u16 soundMode) {
     MUTEX_LOCK(gAudioThread);
 
-    if (soundMode < 3) {
+    if (soundMode < SOUND_MODE_MAX) {
         audio_set_sound_mode(sSoundMenuModeToSoundMode[soundMode]);
     }
 

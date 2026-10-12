@@ -50,6 +50,7 @@
 #include "pc/debuglog.h"
 #include "pc/utils/misc.h"
 #include "pc/mods/mods.h"
+#include "pc/audio/smd_wrapper.h"
 
 #include "debug_context.h"
 #include "menu/intro_geo.h"
@@ -286,6 +287,10 @@ static void select_graphics_backend(void) {
 
     if (!gAudioApi->init()) {
         gAudioApi = &audio_null;
+    } else {
+        if (configSoundOutput == SOUND_MODE_SURROUND) {
+            sound_matrix_decoder_init();
+        }
     }
 }
 
@@ -381,10 +386,19 @@ inline static void buffer_audio(void) {
     }
 
     if (!shouldMute) {
-        for (u16 i=0; i < ARRAY_COUNT(sAudioBuffer); i++) {
+        for (u16 i = 0; i < ARRAY_COUNT(sAudioBuffer); i++) {
             sAudioBuffer[i] *= gMasterVolume;
         }
-        gAudioApi->play((u8 *)sAudioBuffer, 2 * numAudioSamples * 4);
+
+        const uint8_t* buf = (u8 *)sAudioBuffer;
+        size_t len = 2 * numAudioSamples * 4;
+
+        if (!configRawSurroundOutput && configSoundOutput == SOUND_MODE_SURROUND) {
+            buf = sound_matrix_decoder_process_buf(buf, len);
+            len = sound_matrix_decoder_process_len(buf, len);
+        }
+
+        gAudioApi->play(buf, len);
     }
 }
 
@@ -479,7 +493,8 @@ void produce_one_dummy_frame(void (*callback)(), u8 clearColorR, u8 clearColorG,
 
 void audio_shutdown(void) {
     if (gAudioApi) {
-        if (gAudioApi->shutdown) gAudioApi->shutdown();
+        sound_matrix_decoder_shutdown();
+        if (gAudioApi->shutdown) { gAudioApi->shutdown(); }
         gAudioApi = NULL;
     }
 }

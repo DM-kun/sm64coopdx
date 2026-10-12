@@ -97,7 +97,8 @@ unsigned int configSfxVolume                      = MAX_VOLUME;
 unsigned int configEnvVolume                      = MAX_VOLUME;
 bool         configFadeoutDistantSounds           = false;
 bool         configMuteFocusLoss                  = false;
-unsigned int configSoundOutput                    = 0; // 0 = Stereo, 1 = Mono, 2 = Headset
+unsigned int configSoundOutput                    = 0; // 0 = Stereo, 1 = Mono, 2 = Headset, 3 = Surround
+bool         configRawSurroundOutput              = false;
 // control binds
 static const unsigned int defaultConfigKeyA[MAX_BINDS]          = { 0x0026,     0x1000,     0x1103     };
 static const unsigned int defaultConfigKeyB[MAX_BINDS]          = { 0x0033,     0x1001,     0x1101     };
@@ -276,6 +277,7 @@ static const struct ConfigOption options[] = {
     {.name = "fade_distant_sounds",            .type = CONFIG_TYPE_BOOL, .boolValue = &configFadeoutDistantSounds},
     {.name = "mute_focus_loss",                .type = CONFIG_TYPE_BOOL, .boolValue = &configMuteFocusLoss},
     {.name = "sound_output",                   .type = CONFIG_TYPE_UINT, .uintValue = &configSoundOutput},
+    {.name = "raw_surround_output",            .type = CONFIG_TYPE_BOOL, .uintValue = &configRawSurroundOutput},
     // control binds
     {.name = "key_a",                          .type = CONFIG_TYPE_BIND, .uintValue = configKeyA},
     {.name = "key_b",                          .type = CONFIG_TYPE_BIND, .uintValue = configKeyB},

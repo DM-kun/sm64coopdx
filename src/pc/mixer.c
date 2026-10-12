@@ -27,6 +27,8 @@
 #define ROUND_UP_16(v) (((v) + 15) & ~15)
 #define ROUND_UP_8(v) (((v) + 7) & ~7)
 
+#define BUF_SIZE 2816 // extended to accommodate Surround mode, OG Size is 2512
+
 static struct {
     uint16_t in;
     uint16_t out;
@@ -48,8 +50,8 @@ static struct {
 
     int16_t adpcm_table[8][2][8];
     union {
-        int16_t as_s16[2512 / sizeof(int16_t)];
-        uint8_t as_u8[2512];
+        int16_t as_s16[BUF_SIZE / sizeof(int16_t)];
+        uint8_t as_u8[BUF_SIZE];
     } buf;
 } rspa;
 
