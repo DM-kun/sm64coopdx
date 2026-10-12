@@ -65,6 +65,7 @@ extern unsigned int configEnvVolume;
 extern bool         configFadeoutDistantSounds;
 extern bool         configMuteFocusLoss;
 extern unsigned int configSoundOutput;
+extern bool         configRawSurroundOutput;
 // control binds
 extern unsigned int configKeyA[MAX_BINDS];
 extern unsigned int configKeyB[MAX_BINDS];
