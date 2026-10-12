@@ -6,6 +6,7 @@
 #include "pc/lua/utils/smlua_audio_utils.h"
 #include "game/sound_init.h"
 #include "audio/external.h"
+#include "audio/load.h"
 #include "pc/pc_main.h"
 #include "pc/audio/smd_wrapper.h"
 
