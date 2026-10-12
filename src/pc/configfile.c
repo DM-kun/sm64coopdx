@@ -277,7 +277,7 @@ static const struct ConfigOption options[] = {
     {.name = "fade_distant_sounds",            .type = CONFIG_TYPE_BOOL, .boolValue = &configFadeoutDistantSounds},
     {.name = "mute_focus_loss",                .type = CONFIG_TYPE_BOOL, .boolValue = &configMuteFocusLoss},
     {.name = "sound_output",                   .type = CONFIG_TYPE_UINT, .uintValue = &configSoundOutput},
-    {.name = "raw_surround_output",            .type = CONFIG_TYPE_BOOL, .uintValue = &configRawSurroundOutput},
+    {.name = "raw_surround_output",            .type = CONFIG_TYPE_BOOL, .boolValue = &configRawSurroundOutput},
     // control binds
     {.name = "key_a",                          .type = CONFIG_TYPE_BIND, .uintValue = configKeyA},
     {.name = "key_b",                          .type = CONFIG_TYPE_BIND, .uintValue = configKeyB},

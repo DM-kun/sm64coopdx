@@ -1,9 +1,8 @@
 #ifndef SMD_WRAPPER_H
 #define SMD_WRAPPER_H
 
-#include <cstdint>
-
 #ifdef __cplusplus
+#include <cstdint>
 extern "C" {
 #endif
 
